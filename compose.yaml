@@ -1,0 +1,57 @@
+services:
+  auth-db:
+    image: postgres:18.6
+    restart: on-failure:3
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    ports:
+      - "${AUTH_DB_PORT}:5432"
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      DB_URL: ${AUTH_DB_URL}
+      DB_USER: ${AUTH_DB_USER}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-equipmenthub-api}
+      AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS:-600}
+      AUTH_LOCAL_USER_ENABLED: ${AUTH_LOCAL_USER_ENABLED:-false}
+      AUTH_LOCAL_USER_EMAIL: ${AUTH_LOCAL_USER_EMAIL:-}
+      AUTH_LOCAL_USER_PASSWORD: ${AUTH_LOCAL_USER_PASSWORD:-}
+      AUTH_REFRESH_COOKIE_SECURE: ${AUTH_REFRESH_COOKIE_SECURE:-false}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-equipmenthub-api}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${GATEWAY_PORT}:8080"
+    depends_on:
+      - auth-service
+
+volumes:
+  auth-postgres-data:

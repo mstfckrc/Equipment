@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: auth
+              uri: http://auth-service:8080
+              predicates:
+                - Path=/auth/**
+              filters:
+                - PreserveHostHeader
+gateway:
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    issuer: ${AUTH_ISSUER_URI}
+    audience: ${AUTH_JWT_AUDIENCE:equipmenthub-api}

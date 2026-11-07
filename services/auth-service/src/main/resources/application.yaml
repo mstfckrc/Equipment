@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+auth:
+  refresh-cookie:
+    secure: ${AUTH_REFRESH_COOKIE_SECURE:false}
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    issuer: ${AUTH_ISSUER_URI}
+    audience: ${AUTH_JWT_AUDIENCE:equipmenthub-api}
+    access-token-lifetime-seconds: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS:600}
+  local-user:
+    enabled: ${AUTH_LOCAL_USER_ENABLED:false}
+    email: ${AUTH_LOCAL_USER_EMAIL:}
+    password: ${AUTH_LOCAL_USER_PASSWORD:}
+server:
+  servlet:
+    context-path: /auth
