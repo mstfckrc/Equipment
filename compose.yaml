@@ -30,9 +30,6 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-equipmenthub-api}
       AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS:-600}
-      AUTH_LOCAL_USER_ENABLED: ${AUTH_LOCAL_USER_ENABLED:-false}
-      AUTH_LOCAL_USER_EMAIL: ${AUTH_LOCAL_USER_EMAIL:-}
-      AUTH_LOCAL_USER_PASSWORD: ${AUTH_LOCAL_USER_PASSWORD:-}
       AUTH_REFRESH_COOKIE_SECURE: ${AUTH_REFRESH_COOKIE_SECURE:-false}
     depends_on:
       auth-db:
@@ -53,5 +50,66 @@ services:
     depends_on:
       - auth-service
 
+  jenkins:
+    image: jenkins/jenkins:2.580.2-jdk25
+    profiles: ["ci"]
+    restart: on-failure:3
+    environment:
+      JENKINS_JAVA_OPTS: -Xms256m -Xmx1024m
+    ports:
+      - "127.0.0.1:${JENKINS_PORT:-8081}:8080"
+    volumes:
+      - jenkins-home:/var/jenkins_home
+    networks:
+      - ci
+    mem_limit: 2g
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://localhost:8080/login"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  jenkins-agent:
+    image: jenkins/inbound-agent:3395.v6e5377b_0fb_3c-4-jdk25
+    profiles: ["ci"]
+    init: true
+    restart: on-failure:3
+    environment:
+      JENKINS_URL: http://jenkins:8080
+      JENKINS_AGENT_NAME: equipmenthub-agent
+      # Set this after creating the node in Jenkins; start only jenkins first.
+      JENKINS_SECRET: ${JENKINS_AGENT_SECRET:-}
+      JENKINS_WEB_SOCKET: "true"
+      JENKINS_AGENT_WORKDIR: /home/jenkins/agent
+      JENKINS_JAVA_OPTS: -Xms64m -Xmx256m
+      MAVEN_USER_HOME: /home/jenkins/agent/.m2
+      MAVEN_OPTS: -Xmx512m -Dmaven.repo.local=/home/jenkins/agent/.m2/repository
+    volumes:
+      - jenkins-agent-work:/home/jenkins/agent
+    networks:
+      - ci
+    depends_on:
+      jenkins:
+        condition: service_healthy
+    mem_limit: 3g
+    cpus: 2.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ci:
+
 volumes:
   auth-postgres-data:
+  jenkins-home:
+  jenkins-agent-work:

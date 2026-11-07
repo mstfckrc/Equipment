@@ -16,10 +16,6 @@ auth:
     issuer: ${AUTH_ISSUER_URI}
     audience: ${AUTH_JWT_AUDIENCE:equipmenthub-api}
     access-token-lifetime-seconds: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS:600}
-  local-user:
-    enabled: ${AUTH_LOCAL_USER_ENABLED:false}
-    email: ${AUTH_LOCAL_USER_EMAIL:}
-    password: ${AUTH_LOCAL_USER_PASSWORD:}
 server:
   servlet:
     context-path: /auth
