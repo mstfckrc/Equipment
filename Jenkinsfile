@@ -9,12 +9,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Package Auth service') {
             steps {
                 dir('services/auth-service') {
