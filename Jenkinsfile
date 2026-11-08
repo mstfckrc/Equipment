@@ -12,7 +12,7 @@ pipeline {
         stage('Package Auth service') {
             steps {
                 dir('services/auth-service') {
-                    sh 'sh ./mvnw -B -DskipTests package'
+                    sh 'sh ./mvnw -B -DskipTests clean package'
                 }
             }
         }
@@ -20,7 +20,7 @@ pipeline {
         stage('Package Gateway') {
             steps {
                 dir('services/gateway') {
-                    sh 'sh ./mvnw -B -DskipTests package'
+                    sh 'sh ./mvnw -B -DskipTests clean package'
                 }
             }
         }
