@@ -30,7 +30,7 @@ public class JwtService {
 	}
 
 	public String createAccessToken(UUID userId, AuthRole role) {
-		return createAccessToken(userId.toString(), List.of("ROLE_" + role.name()));
+		return createAccessToken(userId.toString(), List.of(role.getAuthority()));
 	}
 
 	private String createAccessToken(String subject, List<String> roles) {

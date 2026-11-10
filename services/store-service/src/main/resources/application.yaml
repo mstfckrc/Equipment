@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: store-service
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    issuer: ${AUTH_ISSUER_URI}
+    audience: ${AUTH_JWT_AUDIENCE}

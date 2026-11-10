@@ -11,6 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
@@ -41,10 +42,35 @@ public class AuthUser {
 	@Column(nullable = false)
 	private boolean enabled = true;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "account_status", length = 16)
+	@Getter(AccessLevel.NONE)
+	private AccountStatus accountStatus = AccountStatus.ACTIVE;
+
+	@Column(name = "first_name", length = 100)
+	private String firstName;
+
+	@Column(name = "last_name", length = 100)
+	private String lastName;
+
 	public AuthUser(String email, String passwordHash, AuthRole role) {
+		this(email, passwordHash, role, null, null);
+	}
+
+	public AuthUser(String email, String passwordHash, AuthRole role, String firstName, String lastName) {
 		this.email = normalizeEmail(email);
 		this.passwordHash = passwordHash;
 		this.role = role;
+		this.firstName = firstName;
+		this.lastName = lastName;
+	}
+
+	public AccountStatus getAccountStatus() {
+		if (accountStatus != null) {
+			return accountStatus;
+		}
+		// Rows created before account review was introduced remain usable.
+		return AccountStatus.ACTIVE;
 	}
 
 	@PrePersist

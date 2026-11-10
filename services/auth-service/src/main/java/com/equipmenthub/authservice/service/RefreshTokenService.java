@@ -1,6 +1,7 @@
 package com.equipmenthub.authservice.service;
 
 import com.equipmenthub.authservice.dto.response.RotatedRefreshToken;
+import com.equipmenthub.authservice.entity.AccountStatus;
 import com.equipmenthub.authservice.entity.AuthRefreshSession;
 import com.equipmenthub.authservice.entity.AuthUser;
 import com.equipmenthub.authservice.repository.AuthRefreshSessionRepository;
@@ -69,7 +70,8 @@ public class RefreshTokenService {
 
 		UUID userId = current.getUser().getId();
 		Optional<AuthUser> foundUser = authUserRepository.findById(userId);
-		if (foundUser.isEmpty() || !foundUser.get().isEnabled()) {
+		if (foundUser.isEmpty() || !foundUser.get().isEnabled()
+				|| foundUser.get().getAccountStatus() != AccountStatus.ACTIVE) {
 			refreshSessionRepository.revokeFamily(current.getFamilyId(), now);
 			return Optional.empty();
 		}

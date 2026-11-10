@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: update
 auth:
+  bootstrap:
+    platform-admin:
+      email: ${PLATFORM_ADMIN_EMAIL:}
+      password: ${PLATFORM_ADMIN_PASSWORD:}
   refresh-cookie:
     secure: ${AUTH_REFRESH_COOKIE_SECURE:false}
   jwt:

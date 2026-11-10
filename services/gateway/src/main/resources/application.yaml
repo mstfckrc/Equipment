@@ -12,6 +12,18 @@ spring:
                 - Path=/auth/**
               filters:
                 - PreserveHostHeader
+            - id: admin-service
+              uri: http://admin-service:8080
+              predicates:
+                - Path=/api/admin/**
+            - id: store-service
+              uri: http://store-service:8080
+              predicates:
+                - Path=/api/stores/**
+            - id: catalog-service
+              uri: http://catalog-service:8080
+              predicates:
+                - Path=/api/catalog/**
 gateway:
   cors:
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}

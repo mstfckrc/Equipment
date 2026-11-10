@@ -1,5 +1,7 @@
 package com.equipmenthub.authservice.dto.response;
 
+import com.equipmenthub.authservice.dto.request.RegistrationType;
+import com.equipmenthub.authservice.entity.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +16,9 @@ import java.util.UUID;
 public class RegisterResponse {
 
 	private UUID id;
+	private UUID registrationId;
 	private String email;
+	private RegistrationType accountType;
+	private AccountStatus status;
 
 }
