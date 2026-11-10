@@ -9,41 +9,57 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 @Configuration
 public class SecurityConfiguration {
 
 	@Bean
 	@Order(1)
-	SecurityFilterChain authProxySecurityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain authProxySecurityFilterChain(
+			HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
 		http
 			.securityMatcher("/auth/**")
 			.cors(Customizer.withDefaults())
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
+			.authorizeHttpRequests(authorize -> authorize
+				.requestMatchers(HttpMethod.GET, "/auth/csrf").permitAll()
+				.requestMatchers(HttpMethod.POST,
+						"/auth/login", "/auth/register", "/auth/refresh", "/auth/logout").permitAll()
+				.requestMatchers("/auth/admin/**").denyAll()
+				.anyRequest().denyAll())
+			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
+				jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
 		return http.build();
 	}
 
 	@Bean
 	@Order(2)
-	SecurityFilterChain gatewayApiSecurityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain gatewayApiSecurityFilterChain(
+			HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
 		http
 			.cors(Customizer.withDefaults())
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorize -> authorize
-				.requestMatchers("/api/**").authenticated()
+				.requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
+				.requestMatchers("/api/stores/admin/**").hasRole("PLATFORM_ADMIN")
+				.requestMatchers("/api/stores/applications/**").hasRole("STORE_OWNER")
+				.requestMatchers("/api/catalog/**").authenticated()
+				.requestMatchers("/api/**").denyAll()
 				.anyRequest().denyAll())
-			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
+			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
+				jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 		return http.build();
 	}
 
@@ -52,7 +68,7 @@ public class SecurityConfiguration {
 			@Value("${gateway.cors.allowed-origin:http://localhost:3000}") String allowedOrigin) {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(List.of(allowedOrigin));
-		configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
 		configuration.setAllowCredentials(true);
 		configuration.setMaxAge(3600L);

@@ -24,5 +24,29 @@ pipeline {
                 }
             }
         }
+
+        stage('Package Store service') {
+            steps {
+                dir('services/store-service') {
+                    sh 'sh ./mvnw -B -DskipTests clean package'
+                }
+            }
+        }
+
+        stage('Package Catalog service') {
+            steps {
+                dir('services/catalog-service') {
+                    sh 'sh ./mvnw -B -DskipTests clean package'
+                }
+            }
+        }
+
+        stage('Package Admin service') {
+            steps {
+                dir('services/admin-service') {
+                    sh 'sh ./mvnw -B -DskipTests clean package'
+                }
+            }
+        }
     }
 }

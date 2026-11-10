@@ -1,5 +1,6 @@
 package com.equipmenthub.authservice.repository;
 
+import com.equipmenthub.authservice.entity.AuthRole;
 import com.equipmenthub.authservice.entity.AuthUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,5 +11,6 @@ public interface AuthUserRepository extends JpaRepository<AuthUser, UUID> {
 
 	Optional<AuthUser> findByEmailIgnoreCase(String email);
 	boolean existsByEmailIgnoreCase(String email);
+	boolean existsByRole(AuthRole role);
 
 }

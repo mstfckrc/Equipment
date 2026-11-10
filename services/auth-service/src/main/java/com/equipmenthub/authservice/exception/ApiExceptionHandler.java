@@ -1,10 +1,6 @@
-package com.equipmenthub.authservice.controller;
+package com.equipmenthub.authservice.exception;
 
 import com.equipmenthub.authservice.dto.response.ApiErrorResponse;
-import com.equipmenthub.authservice.exception.EmailAlreadyExistsException;
-import com.equipmenthub.authservice.exception.InvalidCredentialsException;
-import com.equipmenthub.authservice.exception.InvalidRefreshTokenException;
-import com.equipmenthub.authservice.exception.InvalidRegistrationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,23 +13,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
-	@ExceptionHandler(InvalidCredentialsException.class)
-	ResponseEntity<ApiErrorResponse> invalidCredentials() {
-		return error(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+	@ExceptionHandler(AuthException.class)
+	ResponseEntity<ApiErrorResponse> authException(AuthException exception) {
+		return error(exception.getKind().getStatus(), exception.getMessage());
 	}
 
-	@ExceptionHandler(InvalidRefreshTokenException.class)
-	ResponseEntity<ApiErrorResponse> invalidRefreshToken() {
-		return error(HttpStatus.UNAUTHORIZED, "Refresh session is invalid or expired");
-	}
-
-	@ExceptionHandler({EmailAlreadyExistsException.class, DataIntegrityViolationException.class})
+	@ExceptionHandler(DataIntegrityViolationException.class)
 	ResponseEntity<ApiErrorResponse> registrationConflict() {
 		return error(HttpStatus.CONFLICT, "Registration could not be completed");
 	}
 
-	@ExceptionHandler({InvalidRegistrationException.class, MethodArgumentNotValidException.class,
-			HttpMessageNotReadableException.class})
+	@ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
 	ResponseEntity<ApiErrorResponse> invalidRequest() {
 		return error(HttpStatus.BAD_REQUEST, "Invalid request");
 	}

@@ -7,7 +7,6 @@ import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,15 +15,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 @Configuration
 public class AuthSecurityConfiguration {
 
 	@Bean
 	SecurityFilterChain authApplicationSecurityFilterChain(
-			HttpSecurity http, CsrfTokenRepository csrfTokenRepository) throws Exception {
+			HttpSecurity http,
+			CsrfTokenRepository csrfTokenRepository,
+			JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
 		http
-			.csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
+			.csrf(csrf -> csrf
+				.csrfTokenRepository(csrfTokenRepository)
+				.ignoringRequestMatchers("/admin/**"))
 			.formLogin(AbstractHttpConfigurer::disable)
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.logout(AbstractHttpConfigurer::disable)
@@ -34,13 +38,15 @@ public class AuthSecurityConfiguration {
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(HttpMethod.GET, "/csrf").permitAll()
 				.requestMatchers(HttpMethod.POST, "/login", "/register", "/refresh", "/logout").permitAll()
+				.requestMatchers("/admin/**").hasRole("PLATFORM_ADMIN")
 				.anyRequest().denyAll())
 			.exceptionHandling(exceptions -> exceptions.accessDeniedHandler((request, response, exception) -> {
 				response.setStatus(403);
 				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 				response.getWriter().write("{\"message\":\"Request rejected\"}");
 			}))
-			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
+			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
+				jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
 		return http.build();
 	}

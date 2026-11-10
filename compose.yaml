@@ -17,6 +17,38 @@ services:
       retries: 10
       start_period: 10s
 
+  store-db:
+    image: postgres:18.6
+    restart: on-failure:3
+    environment:
+      POSTGRES_DB: ${STORE_DB_NAME}
+      POSTGRES_USER: ${STORE_DB_USER}
+      POSTGRES_PASSWORD: ${STORE_DB_PASSWORD}
+    volumes:
+      - store-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  catalog-db:
+    image: postgres:18.6
+    restart: on-failure:3
+    environment:
+      POSTGRES_DB: ${CATALOG_DB_NAME}
+      POSTGRES_USER: ${CATALOG_DB_USER}
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD}
+    volumes:
+      - catalog-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   auth-service:
     build:
       context: ./services/auth-service
@@ -26,14 +58,65 @@ services:
       DB_URL: ${AUTH_DB_URL}
       DB_USER: ${AUTH_DB_USER}
       DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      PLATFORM_ADMIN_EMAIL: ${PLATFORM_ADMIN_EMAIL}
+      PLATFORM_ADMIN_PASSWORD: ${PLATFORM_ADMIN_PASSWORD}
       AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
-      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
-      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-equipmenthub-api}
-      AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS:-600}
-      AUTH_REFRESH_COOKIE_SECURE: ${AUTH_REFRESH_COOKIE_SECURE:-false}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
+      AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS}
+      AUTH_REFRESH_COOKIE_SECURE: ${AUTH_REFRESH_COOKIE_SECURE}
     depends_on:
       auth-db:
         condition: service_healthy
+
+  store-service:
+    build:
+      context: ./services/store-service
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      DB_URL: ${STORE_DB_URL}
+      DB_USER: ${STORE_DB_USER}
+      DB_PASSWORD: ${STORE_DB_PASSWORD}
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
+    depends_on:
+      store-db:
+        condition: service_healthy
+
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      DB_URL: ${CATALOG_DB_URL}
+      DB_USER: ${CATALOG_DB_USER}
+      DB_PASSWORD: ${CATALOG_DB_PASSWORD}
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
+      STORE_SERVICE_URL: http://store-service:8080
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      store-service:
+        condition: service_started
+
+  admin-service:
+    build:
+      context: ./services/admin-service
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
+      AUTH_SERVICE_BASE_URL: http://auth-service:8080
+    depends_on:
+      auth-service:
+        condition: service_started
 
   gateway:
     build:
@@ -42,13 +125,36 @@ services:
     restart: on-failure:3
     environment:
       AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
-      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
-      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-equipmenthub-api}
-      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
     ports:
       - "${GATEWAY_PORT}:8080"
     depends_on:
-      - auth-service
+      admin-service:
+        condition: service_started
+      store-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+      - frontend-next-cache:/app/.next
+    depends_on:
+      gateway:
+        condition: service_started
 
   jenkins:
     image: jenkins/jenkins:2.580.2-jdk25
@@ -57,7 +163,7 @@ services:
     environment:
       JENKINS_JAVA_OPTS: -Xms256m -Xmx1024m
     ports:
-      - "127.0.0.1:${JENKINS_PORT:-8081}:8080"
+      - "127.0.0.1:${JENKINS_PORT}:8080"
     volumes:
       - jenkins-home:/var/jenkins_home
     networks:
@@ -85,7 +191,7 @@ services:
       JENKINS_URL: http://jenkins:8080
       JENKINS_AGENT_NAME: equipmenthub-agent
       # Set this after creating the node in Jenkins; start only jenkins first.
-      JENKINS_SECRET: ${JENKINS_AGENT_SECRET:-}
+      JENKINS_SECRET: ${JENKINS_AGENT_SECRET}
       JENKINS_WEB_SOCKET: "true"
       JENKINS_AGENT_WORKDIR: /home/jenkins/agent
       JENKINS_JAVA_OPTS: -Xms64m -Xmx256m
@@ -111,5 +217,9 @@ networks:
 
 volumes:
   auth-postgres-data:
+  store-postgres-data:
+  catalog-postgres-data:
+  frontend-node-modules:
+  frontend-next-cache:
   jenkins-home:
   jenkins-agent-work:

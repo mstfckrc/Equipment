@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: admin-service
+  http:
+    clients:
+      connect-timeout: 2s
+      read-timeout: 5s
+      redirects: dont-follow
+
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    issuer: ${AUTH_ISSUER_URI}
+    audience: ${AUTH_JWT_AUDIENCE}
+  service:
+    base-url: ${AUTH_SERVICE_BASE_URL}

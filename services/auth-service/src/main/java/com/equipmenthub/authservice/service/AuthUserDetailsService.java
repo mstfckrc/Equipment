@@ -22,7 +22,7 @@ public class AuthUserDetailsService implements UserDetailsService {
 
 		return User.withUsername(authUser.getId().toString())
 				.password(authUser.getPasswordHash())
-				.authorities("ROLE_" + authUser.getRole().name())
+				.authorities(authUser.getRole().getAuthority())
 				.disabled(!authUser.isEnabled())
 				.build();
 	}
