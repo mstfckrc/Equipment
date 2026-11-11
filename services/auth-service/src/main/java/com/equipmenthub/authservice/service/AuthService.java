@@ -4,46 +4,61 @@ import com.equipmenthub.authservice.dto.request.LoginRequest;
 import com.equipmenthub.authservice.dto.request.RegisterRequest;
 import com.equipmenthub.authservice.dto.request.RegistrationType;
 import com.equipmenthub.authservice.dto.request.StoreRegistrationReviewRequest;
+import com.equipmenthub.authservice.dto.request.StoreRegistrationDecision;
 import com.equipmenthub.authservice.dto.response.IssuedAuthSession;
 import com.equipmenthub.authservice.dto.response.LoginResponse;
 import com.equipmenthub.authservice.dto.response.RegisterResponse;
 import com.equipmenthub.authservice.dto.response.RotatedRefreshToken;
 import com.equipmenthub.authservice.dto.response.StoreRegistrationResponse;
+import com.equipmenthub.authservice.dto.response.StoreRegistrationStatus;
+import com.equipmenthub.authservice.dto.response.StoreRegistrationSummaryResponse;
+import com.equipmenthub.authservice.dto.response.StoreProfileResponse;
+import com.equipmenthub.authservice.client.StoreServiceClient;
 import com.equipmenthub.authservice.entity.AccountStatus;
-import com.equipmenthub.authservice.entity.AuthRole;
 import com.equipmenthub.authservice.entity.AuthUser;
 import com.equipmenthub.authservice.entity.StoreRegistration;
 import com.equipmenthub.authservice.exception.AuthException;
 import com.equipmenthub.authservice.repository.AuthUserRepository;
 import com.equipmenthub.authservice.repository.StoreRegistrationRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
 	private static final String TOKEN_TYPE = "Bearer";
 
-	private final AuthenticationManager authenticationManager;
-	private final JwtService jwtService;
-	private final RefreshTokenService refreshTokenService;
-	private final AuthUserRepository authUserRepository;
-	private final StoreRegistrationRepository storeRegistrationRepository;
-	private final PasswordEncoder passwordEncoder;
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	@Autowired
+	private JwtService jwtService;
+
+	@Autowired
+	private RefreshTokenService refreshTokenService;
+
+	@Autowired
+	private AuthUserRepository authUserRepository;
+
+	@Autowired
+	private StoreRegistrationRepository storeRegistrationRepository;
+
+	@Autowired
+	private AuthRegistrationService authRegistrationService;
+
+	@Autowired
+	private StoreServiceClient storeServiceClient;
 
 	public IssuedAuthSession login(LoginRequest request) {
 		Authentication authentication;
@@ -63,11 +78,13 @@ public class AuthService {
 				.orElseThrow(() -> new AuthException(
 						AuthException.Kind.UNAUTHORIZED, "Invalid email or password"));
 		if (user.getAccountStatus() == AccountStatus.PENDING) {
-			throw new AuthException(AuthException.Kind.FORBIDDEN, "Store account is awaiting review");
+			throw new AuthException(AuthException.Kind.FORBIDDEN,
+					"Your store account is awaiting review.");
 		}
 		if (user.getAccountStatus() == AccountStatus.REJECTED) {
 			throw new AuthException(
-					AuthException.Kind.FORBIDDEN, "Store account registration was rejected");
+					AuthException.Kind.FORBIDDEN,
+					"The store registration was not approved. Contact support for assistance.");
 		}
 
 		LoginResponse loginResponse = createLoginResponse(jwtService.createAccessToken(authentication));
@@ -76,73 +93,61 @@ public class AuthService {
 		return new IssuedAuthSession(loginResponse, refreshToken.getToken(), refreshToken.getExpiresAt());
 	}
 
-	@Transactional
 	public RegisterResponse register(RegisterRequest request) {
-
-		String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
-
-		if (authUserRepository.existsByEmailIgnoreCase(email)) {
-			throw new AuthException(AuthException.Kind.CONFLICT, "Registration could not be completed");
-		}
-
 		if (request.getPassword().getBytes(StandardCharsets.UTF_8).length > 72) {
-			throw new AuthException(AuthException.Kind.BAD_REQUEST, "Invalid request");
+			throw new AuthException(
+					AuthException.Kind.BAD_REQUEST, "Please check the submitted information.");
 		}
 		validateRegistrationDetails(request);
 
-		AuthRole role = switch (request.getAccountType()) {
-			case CUSTOMER -> AuthRole.CUSTOMER;
-			case STORE_OWNER -> AuthRole.STORE_OWNER;
-		};
-
-		AuthUser user = new AuthUser(email, passwordEncoder.encode(request.getPassword()), role,
-				normalizeOptional(request.getFirstName()), normalizeOptional(request.getLastName()));
-		user.setAccountStatus(request.getAccountType() == RegistrationType.STORE_OWNER
-				? AccountStatus.PENDING : AccountStatus.ACTIVE);
-		user = authUserRepository.save(user);
-		UUID registrationId = null;
-
-		if (request.getAccountType() == RegistrationType.STORE_OWNER) {
-			StoreRegistration registration = storeRegistrationRepository.save(
-					new StoreRegistration(user, request.getStoreName(), request.getPhone(), request.getCity(),
-							request.getDistrict(), request.getAddressLine()));
-			registrationId = registration.getId();
+		if (request.getAccountType() == RegistrationType.CUSTOMER) {
+			return authRegistrationService.registerCustomer(request);
 		}
 
-		return RegisterResponse.builder()
-				.id(user.getId())
-				.registrationId(registrationId)
-				.email(user.getEmail())
-				.accountType(request.getAccountType())
-				.status(user.getAccountStatus())
-				.build();
+		AuthRegistrationService.PreparedStoreRegistration prepared =
+				authRegistrationService.prepareStoreRegistration(request);
+		StoreProfileResponse store = storeServiceClient.createProfile(prepared.toRequest());
+		if (store == null || store.getStoreId() == null || !prepared.accountId().equals(store.getAccountId())) {
+			throw new AuthException(AuthException.Kind.SERVICE_UNAVAILABLE,
+					"Store setup is temporarily unavailable. Retry the same registration shortly.");
+		}
+		return authRegistrationService.completeStoreRegistration(prepared.registrationId(), store.getStoreId());
 	}
 
 	@Transactional(readOnly = true)
-	public List<StoreRegistrationResponse> getPendingStoreRegistrations() {
-		return storeRegistrationRepository.findPendingRegistrations(AccountStatus.PENDING).stream()
-				.map(this::toStoreRegistrationResponse)
+	public List<StoreRegistrationSummaryResponse> getStoreRegistrations() {
+		return storeRegistrationRepository.findAllByStoreIdIsNotNullOrderBySubmittedAtDesc().stream()
+				.map(this::toStoreRegistrationSummaryResponse)
 				.toList();
 	}
 
-	@Transactional
-	public StoreRegistrationResponse approveStoreRegistration(UUID registrationId, UUID adminId) {
-		StoreRegistration registration = findPendingRegistration(registrationId);
-		registration.getUser().setAccountStatus(AccountStatus.ACTIVE);
-		registration.setReviewedAt(Instant.now());
-		registration.setReviewedBy(adminId);
-		registration.setRejectionReason(null);
-		return toStoreRegistrationResponse(registration);
+	@Transactional(readOnly = true)
+	public List<UUID> getApprovedStoreIds() {
+		return storeRegistrationRepository.findStoreIdsByAccountStatus(AccountStatus.ACTIVE);
+	}
+
+	@Transactional(readOnly = true)
+	public StoreRegistrationResponse getStoreRegistration(UUID registrationId) {
+		return storeRegistrationRepository.findByIdAndStoreIdIsNotNull(registrationId)
+				.map(this::toStoreRegistrationResponse)
+				.orElseThrow(() -> new AuthException(
+						AuthException.Kind.NOT_FOUND, "Store registration was not found"));
 	}
 
 	@Transactional
-	public StoreRegistrationResponse rejectStoreRegistration(
+	public StoreRegistrationResponse reviewStoreRegistration(
 			UUID registrationId, UUID adminId, StoreRegistrationReviewRequest request) {
 		StoreRegistration registration = findPendingRegistration(registrationId);
-		registration.getUser().setAccountStatus(AccountStatus.REJECTED);
+		if (request.getStatus() == StoreRegistrationDecision.REJECTED && isBlank(request.getReason())) {
+			throw new AuthException(
+					AuthException.Kind.BAD_REQUEST, "A reason is required when rejecting a store registration");
+		}
+		registration.getUser().setAccountStatus(request.getStatus() == StoreRegistrationDecision.APPROVED
+				? AccountStatus.ACTIVE : AccountStatus.REJECTED);
 		registration.setReviewedAt(Instant.now());
 		registration.setReviewedBy(adminId);
-		registration.setRejectionReason(normalizeOptional(request.getReason()));
+		registration.setRejectionReason(request.getStatus() == StoreRegistrationDecision.REJECTED
+				? normalizeOptional(request.getReason()) : null);
 		return toStoreRegistrationResponse(registration);
 	}
 
@@ -170,13 +175,15 @@ public class AuthService {
 	private void validateRegistrationDetails(RegisterRequest request) {
 		if (request.getAccountType() == RegistrationType.CUSTOMER) {
 			if (isBlank(request.getFirstName()) || isBlank(request.getLastName())) {
-				throw new AuthException(AuthException.Kind.BAD_REQUEST, "Invalid request");
+				throw new AuthException(
+						AuthException.Kind.BAD_REQUEST, "Please check the submitted information.");
 			}
 			return;
 		}
 		if (isBlank(request.getStoreName()) || isBlank(request.getPhone()) || isBlank(request.getCity())
 				|| isBlank(request.getDistrict()) || isBlank(request.getAddressLine())) {
-			throw new AuthException(AuthException.Kind.BAD_REQUEST, "Invalid request");
+			throw new AuthException(
+					AuthException.Kind.BAD_REQUEST, "Please check the submitted information.");
 		}
 	}
 
@@ -187,6 +194,9 @@ public class AuthService {
 		if (registration.getUser().getAccountStatus() != AccountStatus.PENDING) {
 			throw new AuthException(AuthException.Kind.CONFLICT, "Store registration is no longer pending");
 		}
+		if (registration.getStoreId() == null) {
+			throw new AuthException(AuthException.Kind.CONFLICT, "Store profile is not ready for review");
+		}
 		return registration;
 	}
 
@@ -196,16 +206,40 @@ public class AuthService {
 				.id(registration.getId())
 				.accountId(user.getId())
 				.email(user.getEmail())
+				.storeId(registration.getStoreId())
 				.storeName(registration.getStoreName())
 				.phone(registration.getPhone())
 				.city(registration.getCity())
 				.district(registration.getDistrict())
 				.addressLine(registration.getAddressLine())
-				.status(user.getAccountStatus())
+				.status(toRegistrationStatus(user.getAccountStatus()))
 				.submittedAt(registration.getSubmittedAt())
 				.reviewedAt(registration.getReviewedAt())
 				.reviewedBy(registration.getReviewedBy())
 				.rejectionReason(registration.getRejectionReason())
+				.build();
+	}
+
+	private StoreRegistrationStatus toRegistrationStatus(AccountStatus accountStatus) {
+		return switch (accountStatus) {
+			case PENDING -> StoreRegistrationStatus.PENDING;
+			case ACTIVE -> StoreRegistrationStatus.APPROVED;
+			case REJECTED -> StoreRegistrationStatus.REJECTED;
+		};
+	}
+
+	private StoreRegistrationSummaryResponse toStoreRegistrationSummaryResponse(StoreRegistration registration) {
+		AuthUser user = registration.getUser();
+		return StoreRegistrationSummaryResponse.builder()
+				.id(registration.getId())
+				.storeId(registration.getStoreId())
+				.email(user.getEmail())
+				.storeName(registration.getStoreName())
+				.city(registration.getCity())
+				.district(registration.getDistrict())
+				.status(toRegistrationStatus(user.getAccountStatus()))
+				.submittedAt(registration.getSubmittedAt())
+				.reviewedAt(registration.getReviewedAt())
 				.build();
 	}
 
@@ -214,7 +248,7 @@ public class AuthService {
 	}
 
 	private String normalizeOptional(String value) {
-		return value == null || value.isBlank() ? null : value.trim();
+		return isBlank(value) ? null : value.trim();
 	}
 
 }

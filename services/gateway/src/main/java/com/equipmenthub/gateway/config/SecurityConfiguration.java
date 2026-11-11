@@ -53,9 +53,12 @@ public class SecurityConfiguration {
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
-				.requestMatchers("/api/stores/admin/**").hasRole("PLATFORM_ADMIN")
-				.requestMatchers("/api/stores/applications/**").hasRole("STORE_OWNER")
-				.requestMatchers("/api/catalog/**").authenticated()
+				.requestMatchers("/api/stores/internal/**").denyAll()
+				.requestMatchers("/api/stores/admin/**").denyAll()
+				.requestMatchers("/api/stores/me").hasRole("STORE_OWNER")
+				.requestMatchers(HttpMethod.GET, "/api/stores", "/api/stores/*").hasRole("CUSTOMER")
+				.requestMatchers("/api/catalog/stores/me/**").hasRole("STORE_OWNER")
+				.requestMatchers(HttpMethod.GET, "/api/catalog/stores/*/products/**").hasRole("CUSTOMER")
 				.requestMatchers("/api/**").denyAll()
 				.anyRequest().denyAll())
 			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->

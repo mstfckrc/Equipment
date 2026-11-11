@@ -1,6 +1,11 @@
 spring:
   application:
     name: auth-service
+  http:
+    clients:
+      connect-timeout: 2s
+      read-timeout: 5s
+      redirects: dont-follow
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -20,6 +25,11 @@ auth:
     issuer: ${AUTH_ISSUER_URI}
     audience: ${AUTH_JWT_AUDIENCE:equipmenthub-api}
     access-token-lifetime-seconds: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS:600}
+store:
+  service:
+    base-url: ${STORE_SERVICE_URL}
+    username: ${STORE_PROVISIONING_USERNAME}
+    password: ${STORE_PROVISIONING_PASSWORD}
 server:
   servlet:
     context-path: /auth

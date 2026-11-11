@@ -9,7 +9,7 @@ import com.equipmenthub.authservice.entity.AccountStatus;
 import com.equipmenthub.authservice.repository.AuthUserRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -24,16 +24,22 @@ import java.util.Optional;
 import java.util.Set;
 
 @Component
-@RequiredArgsConstructor
 public class PlatformAdminBootstrap implements ApplicationRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(PlatformAdminBootstrap.class);
 	private static final int MAX_BCRYPT_PASSWORD_BYTES = 72;
 
-	private final AuthUserRepository authUserRepository;
-	private final PlatformAdminBootstrapProperties properties;
-	private final PasswordEncoder passwordEncoder;
-	private final Validator validator;
+	@Autowired
+	private AuthUserRepository authUserRepository;
+
+	@Autowired
+	private PlatformAdminBootstrapProperties properties;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private Validator validator;
 
 	@Override
 	@Transactional

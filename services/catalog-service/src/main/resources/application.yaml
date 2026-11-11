@@ -1,6 +1,11 @@
 spring:
   application:
     name: catalog-service
+  http:
+    clients:
+      connect-timeout: 2s
+      read-timeout: 5s
+      redirects: dont-follow
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
