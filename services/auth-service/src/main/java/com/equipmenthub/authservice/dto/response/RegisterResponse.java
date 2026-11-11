@@ -17,8 +17,10 @@ public class RegisterResponse {
 
 	private UUID id;
 	private UUID registrationId;
+	private UUID storeId;
 	private String email;
 	private RegistrationType accountType;
 	private AccountStatus status;
+	private String message;
 
 }

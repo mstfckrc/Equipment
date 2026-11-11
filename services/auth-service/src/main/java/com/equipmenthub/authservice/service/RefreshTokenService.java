@@ -7,7 +7,7 @@ import com.equipmenthub.authservice.entity.AuthUser;
 import com.equipmenthub.authservice.repository.AuthRefreshSessionRepository;
 import com.equipmenthub.authservice.repository.AuthUserRepository;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +23,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class RefreshTokenService {
 
 	public static final String COOKIE_NAME = "EQUIPMENTHUB_REFRESH";
 	private static final Duration SESSION_LIFETIME = Duration.ofDays(7);
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-	private final AuthRefreshSessionRepository refreshSessionRepository;
-	private final AuthUserRepository authUserRepository;
+	@Autowired
+	private AuthRefreshSessionRepository refreshSessionRepository;
+
+	@Autowired
+	private AuthUserRepository authUserRepository;
 
 	@Transactional
 	public CreatedRefreshToken create(UUID userId) {

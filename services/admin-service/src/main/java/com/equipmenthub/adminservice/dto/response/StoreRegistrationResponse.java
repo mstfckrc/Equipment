@@ -16,6 +16,7 @@ public class StoreRegistrationResponse {
 
 	private UUID id;
 	private UUID accountId;
+	private UUID storeId;
 	private String email;
 	private String storeName;
 	private String phone;

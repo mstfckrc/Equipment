@@ -3,7 +3,7 @@ package com.equipmenthub.authservice.security;
 import javax.crypto.SecretKey;
 
 import com.equipmenthub.authservice.config.JwtProperties;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -17,11 +17,13 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 @Configuration
-@RequiredArgsConstructor
 public class JwtDecoderConfiguration {
 
-	private final SecretKey jwtSecretKey;
-	private final JwtProperties jwtProperties;
+	@Autowired
+	private SecretKey jwtSecretKey;
+
+	@Autowired
+	private JwtProperties jwtProperties;
 
 	@Bean
 	JwtDecoder jwtDecoder() {

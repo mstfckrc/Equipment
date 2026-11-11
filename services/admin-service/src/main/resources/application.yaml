@@ -14,3 +14,9 @@ auth:
     audience: ${AUTH_JWT_AUDIENCE}
   service:
     base-url: ${AUTH_SERVICE_BASE_URL}
+store:
+  service:
+    base-url: ${STORE_SERVICE_BASE_URL}
+catalog:
+  service:
+    base-url: ${CATALOG_SERVICE_BASE_URL}

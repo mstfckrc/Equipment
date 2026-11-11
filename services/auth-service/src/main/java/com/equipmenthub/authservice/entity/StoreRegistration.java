@@ -10,6 +10,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.ColumnDefault;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +24,7 @@ import java.util.UUID;
 @Table(name = "store_registration")
 @Getter
 @Setter
-@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StoreRegistration {
 
 	@Id
@@ -31,6 +34,9 @@ public class StoreRegistration {
 	@OneToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "auth_user_id", nullable = false, unique = true)
 	private AuthUser user;
+
+	@Column(name = "store_id", unique = true)
+	private UUID storeId;
 
 	@Column(name = "store_name", nullable = false, length = 200)
 	private String storeName;
@@ -58,6 +64,10 @@ public class StoreRegistration {
 
 	@Column(name = "rejection_reason", length = 500)
 	private String rejectionReason;
+
+	@Version
+	@ColumnDefault("0")
+	private long version;
 
 	public StoreRegistration(AuthUser user, String storeName, String phone, String city,
 			String district, String addressLine) {

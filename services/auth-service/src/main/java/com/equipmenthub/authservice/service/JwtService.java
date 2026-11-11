@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import com.equipmenthub.authservice.config.JwtProperties;
 import com.equipmenthub.authservice.entity.AuthRole;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -17,11 +17,13 @@ import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
 
-	private final JwtEncoder jwtEncoder;
-	private final JwtProperties jwtProperties;
+	@Autowired
+	private JwtEncoder jwtEncoder;
+
+	@Autowired
+	private JwtProperties jwtProperties;
 
 	public String createAccessToken(Authentication authentication) {
 		return createAccessToken(authentication.getName(), authentication.getAuthorities().stream()

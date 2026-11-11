@@ -6,6 +6,10 @@ import com.equipmenthub.authservice.entity.AuthUser;
 import com.equipmenthub.authservice.repository.AuthRefreshSessionRepository;
 import com.equipmenthub.authservice.repository.AuthUserRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -14,17 +18,23 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
+
+	@Mock
+	private AuthRefreshSessionRepository sessions;
+
+	@Mock
+	private AuthUserRepository users;
+
+	@InjectMocks
+	private RefreshTokenService service;
 
 	@Test
 	void replayedRefreshTokenRevokesItsWholeFamily() {
-		AuthRefreshSessionRepository sessions = mock(AuthRefreshSessionRepository.class);
-		AuthUserRepository users = mock(AuthUserRepository.class);
-		RefreshTokenService service = new RefreshTokenService(sessions, users);
 		UUID familyId = UUID.randomUUID();
 		AuthUser user = new AuthUser("customer@example.com", "hash", AuthRole.CUSTOMER);
 		AuthRefreshSession replayedSession = new AuthRefreshSession(

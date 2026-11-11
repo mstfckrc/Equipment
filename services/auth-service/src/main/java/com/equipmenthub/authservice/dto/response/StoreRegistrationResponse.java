@@ -1,6 +1,5 @@
 package com.equipmenthub.authservice.dto.response;
 
-import com.equipmenthub.authservice.entity.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,13 +16,14 @@ public class StoreRegistrationResponse {
 
 	private UUID id;
 	private UUID accountId;
+	private UUID storeId;
 	private String email;
 	private String storeName;
 	private String phone;
 	private String city;
 	private String district;
 	private String addressLine;
-	private AccountStatus status;
+	private StoreRegistrationStatus status;
 	private Instant submittedAt;
 	private Instant reviewedAt;
 	private UUID reviewedBy;

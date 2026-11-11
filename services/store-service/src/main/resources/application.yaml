@@ -1,6 +1,11 @@
 spring:
   application:
     name: store-service
+  http:
+    clients:
+      connect-timeout: 2s
+      read-timeout: 5s
+      redirects: dont-follow
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
@@ -13,3 +18,9 @@ auth:
     secret: ${AUTH_JWT_SECRET}
     issuer: ${AUTH_ISSUER_URI}
     audience: ${AUTH_JWT_AUDIENCE}
+  service:
+    base-url: ${AUTH_SERVICE_URL}
+store:
+  service:
+    auth-username: ${STORE_PROVISIONING_USERNAME}
+    auth-password: ${STORE_PROVISIONING_PASSWORD}

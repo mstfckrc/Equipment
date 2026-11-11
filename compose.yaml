@@ -65,6 +65,9 @@ services:
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
       AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS: ${AUTH_JWT_ACCESS_TOKEN_LIFETIME_SECONDS}
       AUTH_REFRESH_COOKIE_SECURE: ${AUTH_REFRESH_COOKIE_SECURE}
+      STORE_SERVICE_URL: http://store-service:8080
+      STORE_PROVISIONING_USERNAME: ${STORE_PROVISIONING_USERNAME}
+      STORE_PROVISIONING_PASSWORD: ${STORE_PROVISIONING_PASSWORD}
     depends_on:
       auth-db:
         condition: service_healthy
@@ -81,9 +84,14 @@ services:
       AUTH_ISSUER_URI: ${AUTH_ISSUER_URI}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
+      STORE_PROVISIONING_USERNAME: ${STORE_PROVISIONING_USERNAME}
+      STORE_PROVISIONING_PASSWORD: ${STORE_PROVISIONING_PASSWORD}
+      AUTH_SERVICE_URL: http://auth-service:8080
     depends_on:
       store-db:
         condition: service_healthy
+      auth-service:
+        condition: service_started
 
   catalog-service:
     build:
@@ -114,8 +122,14 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE}
       AUTH_SERVICE_BASE_URL: http://auth-service:8080
+      STORE_SERVICE_BASE_URL: http://store-service:8080
+      CATALOG_SERVICE_BASE_URL: http://catalog-service:8080
     depends_on:
       auth-service:
+        condition: service_started
+      store-service:
+        condition: service_started
+      catalog-service:
         condition: service_started
 
   gateway:

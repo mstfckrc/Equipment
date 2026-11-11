@@ -38,6 +38,7 @@ public class AuthSecurityConfiguration {
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(HttpMethod.GET, "/csrf").permitAll()
 				.requestMatchers(HttpMethod.POST, "/login", "/register", "/refresh", "/logout").permitAll()
+				.requestMatchers(HttpMethod.GET, "/internal/approved-store-ids").hasRole("CUSTOMER")
 				.requestMatchers("/admin/**").hasRole("PLATFORM_ADMIN")
 				.anyRequest().denyAll())
 			.exceptionHandling(exceptions -> exceptions.accessDeniedHandler((request, response, exception) -> {

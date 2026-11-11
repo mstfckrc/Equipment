@@ -2,6 +2,7 @@ package com.equipmenthub.authservice.exception;
 
 import com.equipmenthub.authservice.dto.response.ApiErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,12 +21,18 @@ public class ApiExceptionHandler {
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	ResponseEntity<ApiErrorResponse> registrationConflict() {
-		return error(HttpStatus.CONFLICT, "Registration could not be completed");
+		return error(HttpStatus.CONFLICT,
+				"This registration could not be completed. Check your details or sign in.");
+	}
+
+	@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+	ResponseEntity<ApiErrorResponse> concurrentReview() {
+		return error(HttpStatus.CONFLICT, "This store registration has already been reviewed");
 	}
 
 	@ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
 	ResponseEntity<ApiErrorResponse> invalidRequest() {
-		return error(HttpStatus.BAD_REQUEST, "Invalid request");
+		return error(HttpStatus.BAD_REQUEST, "Please check the submitted information.");
 	}
 
 	@ExceptionHandler(InternalAuthenticationServiceException.class)

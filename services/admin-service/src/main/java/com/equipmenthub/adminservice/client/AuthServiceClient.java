@@ -3,10 +3,13 @@ package com.equipmenthub.adminservice.client;
 import com.equipmenthub.adminservice.dto.request.StoreRegistrationReviewRequest;
 import com.equipmenthub.adminservice.dto.response.ApiErrorResponse;
 import com.equipmenthub.adminservice.dto.response.StoreRegistrationResponse;
+import com.equipmenthub.adminservice.dto.response.StoreRegistrationSummaryResponse;
 import com.equipmenthub.adminservice.exception.AdminException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -21,22 +24,25 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class AuthServiceClient {
 
 	private static final String AUTH_ADMIN_PATH = "/auth/admin/store-registrations";
 	private static final String SERVICE_UNAVAILABLE_MESSAGE = "Authentication service is unavailable";
 
-	private final RestClient authRestClient;
-	private final JsonMapper jsonMapper;
+	@Autowired
+	@Qualifier("authRestClient")
+	private RestClient authRestClient;
 
-	public List<StoreRegistrationResponse> getPendingStoreRegistrations(String accessToken) {
+	@Autowired
+	private JsonMapper jsonMapper;
+
+	public List<StoreRegistrationSummaryResponse> getStoreRegistrations(String accessToken) {
 		try {
 			return authRestClient.get()
 					.uri(AUTH_ADMIN_PATH)
 					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
 					.retrieve()
-					.body(new ParameterizedTypeReference<>() { });
+					.body(new ParameterizedTypeReference<List<StoreRegistrationSummaryResponse>>() { });
 		}
 		catch (RestClientResponseException exception) {
 			throw mapResponseException(exception);
@@ -49,10 +55,10 @@ public class AuthServiceClient {
 		}
 	}
 
-	public StoreRegistrationResponse approveStoreRegistration(UUID registrationId, String accessToken) {
+	public StoreRegistrationResponse getStoreRegistration(UUID registrationId, String accessToken) {
 		try {
-			return authRestClient.post()
-					.uri(AUTH_ADMIN_PATH + "/{registrationId}/approve", registrationId)
+			return authRestClient.get()
+					.uri(AUTH_ADMIN_PATH + "/{registrationId}", registrationId)
 					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
 					.retrieve()
 					.body(StoreRegistrationResponse.class);
@@ -68,11 +74,11 @@ public class AuthServiceClient {
 		}
 	}
 
-	public StoreRegistrationResponse rejectStoreRegistration(
+	public StoreRegistrationResponse reviewStoreRegistration(
 			UUID registrationId, StoreRegistrationReviewRequest request, String accessToken) {
 		try {
-			return authRestClient.post()
-					.uri(AUTH_ADMIN_PATH + "/{registrationId}/reject", registrationId)
+			return authRestClient.method(HttpMethod.PATCH)
+					.uri(AUTH_ADMIN_PATH + "/{registrationId}", registrationId)
 					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
 					.body(request)
 					.retrieve()
