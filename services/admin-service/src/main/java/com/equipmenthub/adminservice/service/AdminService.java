@@ -7,9 +7,11 @@ import com.equipmenthub.adminservice.client.AuthServiceClient;
 import com.equipmenthub.adminservice.client.CatalogServiceClient;
 import com.equipmenthub.adminservice.client.StoreServiceClient;
 import com.equipmenthub.adminservice.dto.request.StoreRegistrationReviewRequest;
+import com.equipmenthub.adminservice.dto.request.AccountEnabledUpdateRequest;
 import com.equipmenthub.adminservice.dto.request.StoreStatusUpdateRequest;
 import com.equipmenthub.adminservice.dto.request.ProductModerationRequest;
 import com.equipmenthub.adminservice.dto.response.AdminProductResponse;
+import com.equipmenthub.adminservice.dto.response.AccountSummaryResponse;
 import com.equipmenthub.adminservice.dto.response.StoreProfileResponse;
 import com.equipmenthub.adminservice.dto.response.StoreRegistrationResponse;
 import com.equipmenthub.adminservice.dto.response.StoreRegistrationSummaryResponse;
@@ -31,6 +33,15 @@ public class AdminService {
 
 	public List<StoreRegistrationSummaryResponse> getStoreRegistrations(String accessToken) {
 		return authServiceClient.getStoreRegistrations(accessToken);
+	}
+
+	public List<AccountSummaryResponse> getAccounts(String accessToken) {
+		return authServiceClient.getAccounts(accessToken);
+	}
+
+	public AccountSummaryResponse updateAccountEnabled(
+			UUID accountId, AccountEnabledUpdateRequest request, String accessToken) {
+		return authServiceClient.updateAccountEnabled(accountId, request, accessToken);
 	}
 
 	public StoreRegistrationResponse getStoreRegistration(UUID registrationId, String accessToken) {

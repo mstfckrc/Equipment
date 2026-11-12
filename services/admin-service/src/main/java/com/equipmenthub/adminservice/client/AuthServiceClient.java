@@ -1,6 +1,8 @@
 package com.equipmenthub.adminservice.client;
 
 import com.equipmenthub.adminservice.dto.request.StoreRegistrationReviewRequest;
+import com.equipmenthub.adminservice.dto.request.AccountEnabledUpdateRequest;
+import com.equipmenthub.adminservice.dto.response.AccountSummaryResponse;
 import com.equipmenthub.adminservice.dto.response.ApiErrorResponse;
 import com.equipmenthub.adminservice.dto.response.StoreRegistrationResponse;
 import com.equipmenthub.adminservice.dto.response.StoreRegistrationSummaryResponse;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class AuthServiceClient {
 
 	private static final String AUTH_ADMIN_PATH = "/auth/admin/store-registrations";
+	private static final String AUTH_ADMIN_ACCOUNTS_PATH = "/auth/admin/accounts";
 	private static final String SERVICE_UNAVAILABLE_MESSAGE = "Authentication service is unavailable";
 
 	@Autowired
@@ -43,6 +46,46 @@ public class AuthServiceClient {
 					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
 					.retrieve()
 					.body(new ParameterizedTypeReference<List<StoreRegistrationSummaryResponse>>() { });
+		}
+		catch (RestClientResponseException exception) {
+			throw mapResponseException(exception);
+		}
+		catch (ResourceAccessException exception) {
+			throw serviceUnavailable();
+		}
+		catch (RestClientException exception) {
+			throw invalidDownstreamResponse();
+		}
+	}
+
+	public List<AccountSummaryResponse> getAccounts(String accessToken) {
+		try {
+			return authRestClient.get()
+					.uri(AUTH_ADMIN_ACCOUNTS_PATH)
+					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
+					.retrieve()
+					.body(new ParameterizedTypeReference<List<AccountSummaryResponse>>() { });
+		}
+		catch (RestClientResponseException exception) {
+			throw mapResponseException(exception);
+		}
+		catch (ResourceAccessException exception) {
+			throw serviceUnavailable();
+		}
+		catch (RestClientException exception) {
+			throw invalidDownstreamResponse();
+		}
+	}
+
+	public AccountSummaryResponse updateAccountEnabled(
+			UUID accountId, AccountEnabledUpdateRequest request, String accessToken) {
+		try {
+			return authRestClient.method(HttpMethod.PATCH)
+					.uri(AUTH_ADMIN_ACCOUNTS_PATH + "/{accountId}", accountId)
+					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
+					.body(request)
+					.retrieve()
+					.body(AccountSummaryResponse.class);
 		}
 		catch (RestClientResponseException exception) {
 			throw mapResponseException(exception);

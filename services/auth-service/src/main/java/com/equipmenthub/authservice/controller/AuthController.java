@@ -2,9 +2,11 @@ package com.equipmenthub.authservice.controller;
 
 import com.equipmenthub.authservice.config.RefreshCookieFactory;
 import com.equipmenthub.authservice.dto.request.LoginRequest;
+import com.equipmenthub.authservice.dto.request.AccountEnabledUpdateRequest;
 import com.equipmenthub.authservice.dto.request.RegisterRequest;
 import com.equipmenthub.authservice.dto.request.StoreRegistrationReviewRequest;
 import com.equipmenthub.authservice.dto.response.CsrfTokenResponse;
+import com.equipmenthub.authservice.dto.response.AccountSummaryResponse;
 import com.equipmenthub.authservice.dto.response.IssuedAuthSession;
 import com.equipmenthub.authservice.dto.response.LoginResponse;
 import com.equipmenthub.authservice.dto.response.RegisterResponse;
@@ -57,6 +59,17 @@ public class AuthController {
 	@GetMapping("/admin/store-registrations")
 	public List<StoreRegistrationSummaryResponse> storeRegistrations() {
 		return authService.getStoreRegistrations();
+	}
+
+	@GetMapping("/admin/accounts")
+	public List<AccountSummaryResponse> accounts() {
+		return authService.getAccounts();
+	}
+
+	@PatchMapping("/admin/accounts/{accountId}")
+	public AccountSummaryResponse updateAccountEnabled(
+			@PathVariable UUID accountId, @Valid @RequestBody AccountEnabledUpdateRequest request) {
+		return authService.updateAccountEnabled(accountId, request);
 	}
 
 	@GetMapping("/internal/approved-store-ids")

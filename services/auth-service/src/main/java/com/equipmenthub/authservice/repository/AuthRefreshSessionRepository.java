@@ -23,4 +23,9 @@ public interface AuthRefreshSessionRepository extends JpaRepository<AuthRefreshS
 			+ "where session.familyId = :familyId and session.revokedAt is null")
 	int revokeFamily(@Param("familyId") UUID familyId, @Param("revokedAt") Instant revokedAt);
 
+	@Modifying
+	@Query("update AuthRefreshSession session set session.revokedAt = :revokedAt "
+			+ "where session.user.id = :userId and session.revokedAt is null")
+	int revokeAllForUser(@Param("userId") UUID userId, @Param("revokedAt") Instant revokedAt);
+
 }

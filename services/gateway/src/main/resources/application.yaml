@@ -24,6 +24,10 @@ spring:
               uri: http://catalog-service:8080
               predicates:
                 - Path=/api/catalog/**
+            - id: rental-service
+              uri: http://rental-service:8080
+              predicates:
+                - Path=/api/rentals/**
 gateway:
   cors:
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:3000}

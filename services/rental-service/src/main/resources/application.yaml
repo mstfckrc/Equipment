@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: rental-service
+  http:
+    clients:
+      connect-timeout: 2s
+      read-timeout: 5s
+      redirects: dont-follow
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    issuer: ${AUTH_ISSUER_URI}
+    audience: ${AUTH_JWT_AUDIENCE}
+equipmenthub:
+  services:
+    store:
+      base-url: ${STORE_SERVICE_URL}
+    catalog:
+      base-url: ${CATALOG_SERVICE_URL}

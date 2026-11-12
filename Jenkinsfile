@@ -41,6 +41,14 @@ pipeline {
             }
         }
 
+        stage('Package Rental service') {
+            steps {
+                dir('services/rental-service') {
+                    sh 'sh ./mvnw -B -DskipTests clean package'
+                }
+            }
+        }
+
         stage('Package Admin service') {
             steps {
                 dir('services/admin-service') {

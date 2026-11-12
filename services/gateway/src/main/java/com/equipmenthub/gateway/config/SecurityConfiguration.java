@@ -58,6 +58,12 @@ public class SecurityConfiguration {
 				.requestMatchers("/api/stores/me").hasRole("STORE_OWNER")
 				.requestMatchers(HttpMethod.GET, "/api/stores", "/api/stores/*").hasRole("CUSTOMER")
 				.requestMatchers("/api/catalog/stores/me/**").hasRole("STORE_OWNER")
+				.requestMatchers("/api/rentals/stores/me/**").hasRole("STORE_OWNER")
+				.requestMatchers(HttpMethod.GET,
+						"/api/rentals/stores/*/listings/*/availability",
+						"/api/rentals/reservations/me").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.POST, "/api/rentals/reservations").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.PATCH, "/api/rentals/reservations/me/items/**").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.GET, "/api/catalog/stores/*/products/**").hasRole("CUSTOMER")
 				.requestMatchers("/api/**").denyAll()
 				.anyRequest().denyAll())
@@ -72,7 +78,7 @@ public class SecurityConfiguration {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(List.of(allowedOrigin));
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
+		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN", "Idempotency-Key"));
 		configuration.setAllowCredentials(true);
 		configuration.setMaxAge(3600L);
 

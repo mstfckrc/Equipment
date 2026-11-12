@@ -98,6 +98,11 @@ public class RefreshTokenService {
 				.ifPresent(session -> refreshSessionRepository.revokeFamily(session.getFamilyId(), Instant.now()));
 	}
 
+	@Transactional
+	public void revokeAllForUser(UUID userId) {
+		refreshSessionRepository.revokeAllForUser(userId, Instant.now());
+	}
+
 	private String generateToken() {
 		byte[] randomBytes = new byte[32];
 		SECURE_RANDOM.nextBytes(randomBytes);
