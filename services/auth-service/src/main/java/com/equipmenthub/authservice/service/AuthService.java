@@ -1,11 +1,13 @@
 package com.equipmenthub.authservice.service;
 
 import com.equipmenthub.authservice.dto.request.LoginRequest;
+import com.equipmenthub.authservice.dto.request.AccountEnabledUpdateRequest;
 import com.equipmenthub.authservice.dto.request.RegisterRequest;
 import com.equipmenthub.authservice.dto.request.RegistrationType;
 import com.equipmenthub.authservice.dto.request.StoreRegistrationReviewRequest;
 import com.equipmenthub.authservice.dto.request.StoreRegistrationDecision;
 import com.equipmenthub.authservice.dto.response.IssuedAuthSession;
+import com.equipmenthub.authservice.dto.response.AccountSummaryResponse;
 import com.equipmenthub.authservice.dto.response.LoginResponse;
 import com.equipmenthub.authservice.dto.response.RegisterResponse;
 import com.equipmenthub.authservice.dto.response.RotatedRefreshToken;
@@ -15,6 +17,7 @@ import com.equipmenthub.authservice.dto.response.StoreRegistrationSummaryRespons
 import com.equipmenthub.authservice.dto.response.StoreProfileResponse;
 import com.equipmenthub.authservice.client.StoreServiceClient;
 import com.equipmenthub.authservice.entity.AccountStatus;
+import com.equipmenthub.authservice.entity.AuthRole;
 import com.equipmenthub.authservice.entity.AuthUser;
 import com.equipmenthub.authservice.entity.StoreRegistration;
 import com.equipmenthub.authservice.exception.AuthException;
@@ -119,6 +122,27 @@ public class AuthService {
 		return storeRegistrationRepository.findAllByStoreIdIsNotNullOrderBySubmittedAtDesc().stream()
 				.map(this::toStoreRegistrationSummaryResponse)
 				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<AccountSummaryResponse> getAccounts() {
+		return authUserRepository.findAllByRoleInOrderByEmailAsc(
+				List.of(AuthRole.CUSTOMER, AuthRole.STORE_OWNER)).stream()
+				.map(this::toAccountSummaryResponse)
+				.toList();
+	}
+
+	@Transactional
+	public AccountSummaryResponse updateAccountEnabled(UUID accountId, AccountEnabledUpdateRequest request) {
+		AuthUser user = authUserRepository.findById(accountId)
+				.filter(account -> account.getRole() == AuthRole.CUSTOMER || account.getRole() == AuthRole.STORE_OWNER)
+				.orElseThrow(() -> new AuthException(
+						AuthException.Kind.NOT_FOUND, "Account was not found"));
+		user.setEnabled(request.getEnabled());
+		if (!request.getEnabled()) {
+			refreshTokenService.revokeAllForUser(user.getId());
+		}
+		return toAccountSummaryResponse(user);
 	}
 
 	@Transactional(readOnly = true)
@@ -240,6 +264,18 @@ public class AuthService {
 				.status(toRegistrationStatus(user.getAccountStatus()))
 				.submittedAt(registration.getSubmittedAt())
 				.reviewedAt(registration.getReviewedAt())
+				.build();
+	}
+
+	private AccountSummaryResponse toAccountSummaryResponse(AuthUser user) {
+		return AccountSummaryResponse.builder()
+				.id(user.getId())
+				.email(user.getEmail())
+				.role(user.getRole())
+				.accountStatus(user.getAccountStatus())
+				.enabled(user.isEnabled())
+				.firstName(user.getFirstName())
+				.lastName(user.getLastName())
 				.build();
 	}
 
