@@ -32,6 +32,8 @@ public class SecurityConfiguration {
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(HttpMethod.GET, "/auth/csrf").permitAll()
+				.requestMatchers(HttpMethod.GET, "/auth/me").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.PUT, "/auth/me").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.POST,
 						"/auth/login", "/auth/register", "/auth/refresh", "/auth/logout").permitAll()
 				.requestMatchers("/auth/admin/**").denyAll()
@@ -56,7 +58,7 @@ public class SecurityConfiguration {
 				.requestMatchers("/api/stores/internal/**").denyAll()
 				.requestMatchers("/api/stores/admin/**").denyAll()
 				.requestMatchers("/api/stores/me").hasRole("STORE_OWNER")
-				.requestMatchers(HttpMethod.GET, "/api/stores", "/api/stores/*").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.GET, "/api/stores", "/api/stores/*").permitAll()
 				.requestMatchers("/api/catalog/stores/me/**").hasRole("STORE_OWNER")
 				.requestMatchers("/api/rentals/stores/me/**").hasRole("STORE_OWNER")
 				.requestMatchers(HttpMethod.GET,
@@ -64,7 +66,7 @@ public class SecurityConfiguration {
 						"/api/rentals/reservations/me").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.POST, "/api/rentals/reservations").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.PATCH, "/api/rentals/reservations/me/items/**").hasRole("CUSTOMER")
-				.requestMatchers(HttpMethod.GET, "/api/catalog/stores/*/products/**").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.GET, "/api/catalog/stores/*/products/**").permitAll()
 				.requestMatchers("/api/**").denyAll()
 				.anyRequest().denyAll())
 			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->

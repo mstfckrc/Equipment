@@ -4,7 +4,6 @@ import com.equipmenthub.storeservice.exception.StoreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -22,10 +21,9 @@ public class AuthServiceClient {
 	@Qualifier("authRestClient")
 	private RestClient authRestClient;
 
-	public List<UUID> getApprovedStoreIds(String accessToken) {
+	public List<UUID> getApprovedStoreIds() {
 		try {
-			List<UUID> storeIds = authRestClient.get().uri("/auth/internal/approved-store-ids")
-					.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+			List<UUID> storeIds = authRestClient.get().uri("/auth/public/approved-store-ids")
 					.retrieve().body(new ParameterizedTypeReference<List<UUID>>() { });
 			if (storeIds == null) {
 				throw new StoreException(HttpStatus.BAD_GATEWAY, "Authentication service returned an invalid response");

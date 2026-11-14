@@ -64,7 +64,7 @@ public class SecurityConfiguration {
 				.requestMatchers("/api/stores/admin/**").hasRole("PLATFORM_ADMIN")
 				.requestMatchers("/api/stores/internal/ownership").hasRole("STORE_OWNER")
 				.requestMatchers("/api/stores/me").hasRole("STORE_OWNER")
-				.requestMatchers(HttpMethod.GET, "/api/stores", "/api/stores/*").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.GET, "/api/stores", "/api/stores/*").permitAll()
 				.anyRequest().denyAll())
 			.oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
 				jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));

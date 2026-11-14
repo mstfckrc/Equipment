@@ -37,7 +37,10 @@ public class AuthSecurityConfiguration {
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(HttpMethod.GET, "/csrf").permitAll()
+				.requestMatchers(HttpMethod.GET, "/me").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.PUT, "/me").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.POST, "/login", "/register", "/refresh", "/logout").permitAll()
+				.requestMatchers(HttpMethod.GET, "/public/approved-store-ids").permitAll()
 				.requestMatchers(HttpMethod.GET, "/internal/approved-store-ids").hasRole("CUSTOMER")
 				.requestMatchers("/admin/**").hasRole("PLATFORM_ADMIN")
 				.anyRequest().denyAll())

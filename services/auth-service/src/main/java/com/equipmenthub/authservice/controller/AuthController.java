@@ -2,6 +2,8 @@ package com.equipmenthub.authservice.controller;
 
 import com.equipmenthub.authservice.config.RefreshCookieFactory;
 import com.equipmenthub.authservice.dto.request.LoginRequest;
+import com.equipmenthub.authservice.dto.request.AccountProfileUpdateRequest;
+import com.equipmenthub.authservice.dto.response.AccountProfileResponse;
 import com.equipmenthub.authservice.dto.request.AccountEnabledUpdateRequest;
 import com.equipmenthub.authservice.dto.request.RegisterRequest;
 import com.equipmenthub.authservice.dto.request.StoreRegistrationReviewRequest;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,6 +59,17 @@ public class AuthController {
 		return authService.register(request);
 	}
 
+	@GetMapping("/me")
+	public AccountProfileResponse ownProfile(Authentication authentication) {
+		return authService.getOwnProfile(UUID.fromString(authentication.getName()));
+	}
+
+	@PutMapping("/me")
+	public AccountProfileResponse updateOwnProfile(
+			Authentication authentication, @Valid @RequestBody AccountProfileUpdateRequest request) {
+		return authService.updateOwnProfile(UUID.fromString(authentication.getName()), request);
+	}
+
 	@GetMapping("/admin/store-registrations")
 	public List<StoreRegistrationSummaryResponse> storeRegistrations() {
 		return authService.getStoreRegistrations();
@@ -74,6 +88,11 @@ public class AuthController {
 
 	@GetMapping("/internal/approved-store-ids")
 	public List<UUID> approvedStoreIds() {
+		return authService.getApprovedStoreIds();
+	}
+
+	@GetMapping("/public/approved-store-ids")
+	public List<UUID> publicApprovedStoreIds() {
 		return authService.getApprovedStoreIds();
 	}
 
