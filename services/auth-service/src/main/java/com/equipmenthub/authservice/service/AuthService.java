@@ -1,6 +1,8 @@
 package com.equipmenthub.authservice.service;
 
 import com.equipmenthub.authservice.dto.request.LoginRequest;
+import com.equipmenthub.authservice.dto.request.AccountProfileUpdateRequest;
+import com.equipmenthub.authservice.dto.response.AccountProfileResponse;
 import com.equipmenthub.authservice.dto.request.AccountEnabledUpdateRequest;
 import com.equipmenthub.authservice.dto.request.RegisterRequest;
 import com.equipmenthub.authservice.dto.request.RegistrationType;
@@ -122,6 +124,37 @@ public class AuthService {
 		return storeRegistrationRepository.findAllByStoreIdIsNotNullOrderBySubmittedAtDesc().stream()
 				.map(this::toStoreRegistrationSummaryResponse)
 				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public AccountProfileResponse getOwnProfile(UUID accountId) {
+		return toAccountProfileResponse(findActiveCustomer(accountId));
+	}
+
+	@Transactional
+	public AccountProfileResponse updateOwnProfile(UUID accountId, AccountProfileUpdateRequest request) {
+		AuthUser user = findActiveCustomer(accountId);
+		user.setFirstName(request.getFirstName().trim());
+		user.setLastName(request.getLastName().trim());
+		return toAccountProfileResponse(user);
+	}
+
+	private AuthUser findActiveCustomer(UUID accountId) {
+		AuthUser user = authUserRepository.findById(accountId)
+				.orElseThrow(() -> new AuthException(AuthException.Kind.UNAUTHORIZED, "Oturum geçersiz."));
+		if (user.getRole() != AuthRole.CUSTOMER || !user.isEnabled()
+				|| user.getAccountStatus() != AccountStatus.ACTIVE) {
+			throw new AuthException(AuthException.Kind.FORBIDDEN, "Bu işleme erişim izniniz yok.");
+		}
+		return user;
+	}
+
+	private AccountProfileResponse toAccountProfileResponse(AuthUser user) {
+		return AccountProfileResponse.builder()
+				.email(user.getEmail())
+				.firstName(user.getFirstName())
+				.lastName(user.getLastName())
+				.build();
 	}
 
 	@Transactional(readOnly = true)

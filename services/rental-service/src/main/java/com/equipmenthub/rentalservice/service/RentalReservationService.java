@@ -35,7 +35,7 @@ import java.util.UUID;
 public class RentalReservationService {
 
 	private static final ZoneId BUSINESS_ZONE = ZoneId.of("Europe/Istanbul");
-	private static final int MAX_CALENDAR_WINDOW_DAYS = 62;
+	private static final int MAX_CALENDAR_WINDOW_DAYS = 366;
 
 	@Autowired
 	private CatalogServiceClient catalogServiceClient;
@@ -50,7 +50,7 @@ public class RentalReservationService {
 			UUID storeId, UUID listingId, LocalDate fromDate, LocalDate toDateExclusive, String accessToken) {
 		if (fromDate == null || toDateExclusive == null || !toDateExclusive.isAfter(fromDate)
 				|| ChronoUnit.DAYS.between(fromDate, toDateExclusive) > MAX_CALENDAR_WINDOW_DAYS) {
-			throw invalidRequest("Choose a valid calendar date range of up to 62 days");
+			throw invalidRequest("Choose a valid calendar date range of up to 366 days");
 		}
 		CatalogListingResponse listing = catalogServiceClient.getPublicListing(storeId, listingId, accessToken);
 		return rentalReservationPersistenceService.getAvailability(

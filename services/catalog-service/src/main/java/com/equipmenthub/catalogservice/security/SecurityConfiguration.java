@@ -20,7 +20,7 @@ public class SecurityConfiguration {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers("/api/catalog/stores/me/**").hasRole("STORE_OWNER")
-				.requestMatchers(HttpMethod.GET, "/api/catalog/stores/*/products/**").hasRole("CUSTOMER")
+				.requestMatchers(HttpMethod.GET, "/api/catalog/stores/*/products/**").permitAll()
 				.requestMatchers("/internal/admin/products/**").hasRole("PLATFORM_ADMIN")
 				.requestMatchers("/api/catalog/**").denyAll()
 				.anyRequest().denyAll())

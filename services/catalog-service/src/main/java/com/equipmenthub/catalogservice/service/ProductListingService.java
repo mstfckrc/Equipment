@@ -28,14 +28,14 @@ public class ProductListingService {
 	@Autowired
 	private StoreServiceClient storeServiceClient;
 
-	public List<PublicProductResponse> getStoreProducts(UUID storeId, String accessToken) {
-		storeServiceClient.requireActiveStore(storeId, accessToken);
+	public List<PublicProductResponse> getStoreProducts(UUID storeId) {
+		storeServiceClient.requirePublicStore(storeId);
 		return productListingRepository.findAllByStoreIdAndStatusOrderByNameAsc(storeId, ProductStatus.PUBLISHED)
 				.stream().map(PublicProductResponse::from).toList();
 	}
 
-	public PublicProductResponse getStoreProduct(UUID storeId, UUID productId, String accessToken) {
-		storeServiceClient.requireActiveStore(storeId, accessToken);
+	public PublicProductResponse getStoreProduct(UUID storeId, UUID productId) {
+		storeServiceClient.requirePublicStore(storeId);
 		return productListingRepository.findByIdAndStoreIdAndStatus(productId, storeId, ProductStatus.PUBLISHED)
 				.map(PublicProductResponse::from)
 				.orElseThrow(() -> new CatalogException(HttpStatus.NOT_FOUND, "Product not found"));

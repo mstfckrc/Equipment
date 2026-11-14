@@ -37,14 +37,13 @@ public class StoreProfileController {
 	private AuthServiceClient authServiceClient;
 
 	@GetMapping
-	public List<PublicStoreSummaryResponse> getPublicStores(@AuthenticationPrincipal Jwt jwt) {
-		return storeProfileService.getPublicStores(authServiceClient.getApprovedStoreIds(jwt.getTokenValue()));
+	public List<PublicStoreSummaryResponse> getPublicStores() {
+		return storeProfileService.getPublicStores(authServiceClient.getApprovedStoreIds());
 	}
 
 	@GetMapping("/{storeId}")
-	public PublicStoreResponse getPublicStore(@PathVariable UUID storeId, @AuthenticationPrincipal Jwt jwt) {
-		return storeProfileService.getPublicStore(
-				storeId, authServiceClient.getApprovedStoreIds(jwt.getTokenValue()));
+	public PublicStoreResponse getPublicStore(@PathVariable UUID storeId) {
+		return storeProfileService.getPublicStore(storeId, authServiceClient.getApprovedStoreIds());
 	}
 
 	@GetMapping("/me")

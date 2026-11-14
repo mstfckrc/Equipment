@@ -47,10 +47,9 @@ public class StoreServiceClient {
 		}
 	}
 
-	public void requireActiveStore(UUID storeId, String accessToken) {
+	public void requirePublicStore(UUID storeId) {
 		try {
 			storeRestClient.get().uri("/api/stores/{storeId}", storeId)
-					.header(HttpHeaders.AUTHORIZATION, bearerToken(accessToken))
 					.retrieve().toBodilessEntity();
 		}
 		catch (RestClientResponseException exception) {
