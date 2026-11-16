@@ -38,6 +38,7 @@ export function routeForRole(role: AccountRole) {
 export function customerReturnPath(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return null;
   if (value === "/account" || value === "/cart" || value === "/rentals" || value.startsWith("/shops/")) return value;
+  if (/^\/rentals\/confirmations\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return value;
   return null;
 }
 

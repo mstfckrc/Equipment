@@ -1,6 +1,7 @@
 package com.equipmenthub.rentalservice.dto.response;
 
 import com.equipmenthub.rentalservice.entity.Reservation;
+import com.equipmenthub.rentalservice.entity.ConfirmationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class ReservationResponse {
 	private String currencyCode;
 	private Instant createdAt;
 	private List<ReservationItemResponse> items;
+	private ConfirmationStatus confirmationStatus;
 
 	public static ReservationResponse from(Reservation reservation, List<ReservationItemResponse> items) {
 		return ReservationResponse.builder()

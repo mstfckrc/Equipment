@@ -7,7 +7,7 @@ COPY mvnw pom.xml ./
 RUN chmod +x mvnw
 
 COPY src/ src/
-RUN ./mvnw -B -DskipTests package
+RUN ./mvnw -B package
 
 FROM eclipse-temurin:25.0.5_8-jre-noble
 

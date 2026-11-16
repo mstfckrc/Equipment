@@ -11,6 +11,9 @@ import com.equipmenthub.rentalservice.dto.response.ReservationItemResponse;
 import com.equipmenthub.rentalservice.dto.response.ReservationResponse;
 import com.equipmenthub.rentalservice.dto.response.ReservationUnitAssignmentResponse;
 import com.equipmenthub.rentalservice.entity.EquipmentUnit;
+import com.equipmenthub.rentalservice.entity.ConfirmationStatus;
+import com.equipmenthub.rentalservice.repository.ConfirmationSummary;
+import com.equipmenthub.rentalservice.repository.RentalConfirmationRepository;
 import com.equipmenthub.rentalservice.entity.EquipmentUnitStatus;
 import com.equipmenthub.rentalservice.entity.RentalCheckout;
 import com.equipmenthub.rentalservice.entity.RentalInventory;
@@ -70,6 +73,12 @@ public class RentalReservationPersistenceService {
 
 	@Autowired
 	private ReservationUnitAssignmentRepository reservationUnitAssignmentRepository;
+
+	@Autowired
+	private ConfirmationPersistenceService confirmationPersistenceService;
+
+	@Autowired
+	private RentalConfirmationRepository confirmationRepository;
 
 	@Transactional(readOnly = true)
 	public AvailabilityCalendarResponse getAvailability(
@@ -174,6 +183,7 @@ public class RentalReservationPersistenceService {
 			}
 			reservationItemRepository.saveAllAndFlush(items);
 		}
+		confirmationPersistenceService.enqueue(checkout);
 		return checkoutResponse(checkout);
 	}
 
@@ -408,6 +418,9 @@ public class RentalReservationPersistenceService {
 			return List.of();
 		}
 		List<UUID> reservationIds = reservations.stream().map(Reservation::getId).toList();
+		var confirmationStatuses = confirmationRepository.findSummaries(reservations.stream()
+				.map(reservation -> reservation.getCheckout().getId()).distinct().toList()).stream()
+				.collect(Collectors.toMap(ConfirmationSummary::getCheckoutId, ConfirmationSummary::getStatus));
 		List<ReservationItem> reservationItems = reservationItemRepository
 				.findAllByReservation_IdInOrderByPickupDateAscIdAsc(reservationIds);
 		Map<UUID, List<ReservationUnitAssignmentResponse>> unitsByItem = assignmentResponses(reservationItems);
@@ -416,8 +429,13 @@ public class RentalReservationPersistenceService {
 				.collect(Collectors.groupingBy(item -> item.getReservation().getId(), LinkedHashMap::new,
 						Collectors.mapping(item -> ReservationItemResponse.from(item,
 								unitsByItem.getOrDefault(item.getId(), List.of()), now), Collectors.toList())));
-		return reservations.stream().map(reservation -> ReservationResponse.from(reservation,
-				itemsByReservation.getOrDefault(reservation.getId(), List.of()))).toList();
+		return reservations.stream().map(reservation -> {
+			ReservationResponse response = ReservationResponse.from(reservation,
+					itemsByReservation.getOrDefault(reservation.getId(), List.of()));
+			response.setConfirmationStatus(confirmationStatuses.getOrDefault(reservation.getCheckout().getId(),
+					ConfirmationStatus.PENDING));
+			return response;
+		}).toList();
 	}
 
 	private ReservationItemResponse reservationItemResponse(ReservationItem item, LocalDateTime now) {

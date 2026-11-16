@@ -63,6 +63,7 @@ public class SecurityConfiguration {
 				.requestMatchers("/api/rentals/stores/me/**").hasRole("STORE_OWNER")
 				.requestMatchers(HttpMethod.GET,
 						"/api/rentals/stores/*/listings/*/availability",
+						"/api/rentals/checkouts/*/confirmation",
 						"/api/rentals/reservations/me").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.POST, "/api/rentals/reservations").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.PATCH, "/api/rentals/reservations/me/items/**").hasRole("CUSTOMER")

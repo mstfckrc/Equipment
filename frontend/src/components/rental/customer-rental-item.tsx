@@ -70,7 +70,7 @@ export function CustomerRentalItem({ item, busy, saving, error, onAction }: {
         {item.assignedUnits.map((unit) => <li key={unit.unitId} className="space-y-1 break-words text-sm">
           <p className="font-medium">Cihaz: {unit.unitCode}</p>
           {unit.damageNote ? <p className="text-[var(--muted)]">Mağaza kontrol notu: {unit.damageNote}</p> : null}
-          {(unit.manualChargeAmount ?? 0) > 0 ? <p className="text-[var(--muted)]">Mağazanın belirttiği ek tutar: {money.format(unit.manualChargeAmount ?? 0)} (tahsilat bilgisi değildir)</p> : null}
+          {(unit.manualChargeAmount ?? 0) > 0 ? <p className="text-[var(--muted)]">Mağazanın belirttiği ek tutar: {money.format(unit.manualChargeAmount ?? 0)}</p> : null}
         </li>)}
       </ul>
     </details> : null}

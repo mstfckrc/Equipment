@@ -1,6 +1,32 @@
 spring:
   application:
     name: rental-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    admin:
+      fail-fast: false
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 1
+        max.block.ms: 3000
+        request.timeout.ms: 3000
+        delivery.timeout.ms: 5000
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      max-poll-records: 1
+      properties:
+        allow.auto.create.topics: false
+        max.poll.interval.ms: 900000
+    listener:
+      ack-mode: record
+      missing-topics-fatal: false
   http:
     clients:
       connect-timeout: 2s
@@ -24,3 +50,6 @@ equipmenthub:
       base-url: ${STORE_SERVICE_URL}
     catalog:
       base-url: ${CATALOG_SERVICE_URL}
+  confirmation:
+    consumer-enabled: ${RENTAL_CONFIRMATION_CONSUMER_ENABLED:true}
+    maintenance-enabled: ${RENTAL_CONFIRMATION_MAINTENANCE_ENABLED:true}

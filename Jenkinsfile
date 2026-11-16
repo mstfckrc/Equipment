@@ -9,10 +9,15 @@ pipeline {
     }
 
     stages {
-        stage('Package Auth service') {
+        stage('Test and package Auth service') {
             steps {
                 dir('services/auth-service') {
-                    sh 'sh ./mvnw -B -DskipTests clean package'
+                    sh 'sh ./mvnw -B clean package'
+                }
+            }
+            post {
+                always {
+                    junit testResults: 'services/auth-service/target/surefire-reports/TEST-*.xml'
                 }
             }
         }
@@ -41,10 +46,15 @@ pipeline {
             }
         }
 
-        stage('Package Rental service') {
+        stage('Test and package Rental service') {
             steps {
                 dir('services/rental-service') {
-                    sh 'sh ./mvnw -B -DskipTests clean package'
+                    sh 'sh ./mvnw -B clean package'
+                }
+            }
+            post {
+                always {
+                    junit testResults: 'services/rental-service/target/surefire-reports/TEST-*.xml'
                 }
             }
         }
@@ -53,6 +63,18 @@ pipeline {
             steps {
                 dir('services/admin-service') {
                     sh 'sh ./mvnw -B -DskipTests clean package'
+                }
+            }
+        }
+
+        stage('Check and build frontend') {
+            steps {
+                dir('frontend') {
+                    nodejs(nodeJSInstallationName: 'equipmenthub-node24') {
+                        sh 'npm ci --no-audit --no-fund'
+                        sh 'npm run lint'
+                        sh 'npm run build'
+                    }
                 }
             }
         }

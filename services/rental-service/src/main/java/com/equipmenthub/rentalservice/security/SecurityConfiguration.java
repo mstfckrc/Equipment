@@ -21,6 +21,7 @@ public class SecurityConfiguration {
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers("/api/rentals/stores/me/**").hasRole("STORE_OWNER")
 				.requestMatchers(HttpMethod.GET,
+						"/api/rentals/checkouts/*/confirmation",
 						"/api/rentals/stores/*/listings/*/availability",
 						"/api/rentals/reservations/me").hasRole("CUSTOMER")
 				.requestMatchers(HttpMethod.POST, "/api/rentals/reservations").hasRole("CUSTOMER")

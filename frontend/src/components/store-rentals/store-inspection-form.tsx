@@ -11,7 +11,7 @@ export function StoreInspectionForm({ item, drafts, busy, onDraft, onReview }: {
 }) {
   const triggerId = `inspection-review-${item.itemId}`;
   return <form className="space-y-5" noValidate onSubmit={(event) => { event.preventDefault(); if (!busy) onReview(triggerId); }}>
-    <p className="text-sm leading-6 text-[var(--muted)]">Her cihazın kontrol sonucunu ayrı belirt. Ek tutar yalnızca kayıt edilir; bu ekranda ödeme alınmaz.</p>
+    <p className="text-sm leading-6 text-[var(--muted)]">Her cihazın kontrol sonucunu, açıklamasını ve varsa ek tutarı ayrı belirt.</p>
     {item.assignedUnits.map((unit) => {
       const draft = drafts[unit.unitId] ?? emptyInspectionDraft;
       return <fieldset key={unit.unitId} disabled={busy} className="min-w-0 space-y-4 rounded-xl border border-[var(--border)] p-4">

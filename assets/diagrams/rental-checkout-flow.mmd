@@ -1,0 +1,39 @@
+---
+title: EquipmentHub — Kiralama ve onay belgesi akışı
+---
+sequenceDiagram
+    actor Customer as Müşteri
+    participant UI as Arayüz
+    participant Rental as Rental API
+    participant Catalog as Catalog Service
+    participant DB as Rental PostgreSQL
+    participant Publisher as Outbox publisher
+    participant Kafka as Kafka
+    participant Worker as Belge consumer
+
+    Customer->>UI: Sepeti onayla
+    UI->>Rental: Gateway üzerinden POST /api/rentals/reservations<br/>JWT + Idempotency-Key + sepet satırları
+    Rental->>Catalog: Güncel ilan ve fiyatları doğrula
+    Catalog-->>Rental: İlan bilgileri
+    Rental->>DB: Envanteri kilitle ve tarih/adet kapasitesini kontrol et
+    alt Fiyat veya kapasite değişmiş
+        Rental-->>UI: 409 Conflict ve değişiklik bilgileri
+        UI-->>Customer: Sepeti güncelleme / yeniden onaylama
+    else Kontroller başarılı
+        Rental->>DB: Tek transaction: checkout + rezervasyonlar<br/>PENDING belge + outbox kaydı
+        DB-->>Rental: Commit
+        Rental-->>UI: 201 Created ve checkout bilgileri
+        UI-->>Customer: Rezervasyon oluşturuldu
+        Publisher->>DB: Bekleyen outbox kaydını oku
+        Publisher->>Kafka: CheckoutConfirmed olayı / key: checkoutId
+        Kafka-->>Publisher: Yayın onayı
+        Publisher->>DB: Yayımlandı olarak işaretle
+        Kafka->>Worker: Olayı tüket
+        Worker->>DB: Kayıtlı rezervasyondan belgeyi hazırla ve READY kaydet
+        loop Belge beklenirken sınırlı sorgulama
+            UI->>Rental: GET /api/rentals/checkouts/{checkoutId}/confirmation
+            Rental->>DB: Müşteri sahipliği ve belge durumunu oku
+            Rental-->>UI: PENDING / READY / FAILED
+        end
+        UI-->>Customer: Hazır onay belgesini görüntüle
+    end

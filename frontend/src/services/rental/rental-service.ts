@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/http/api-client";
 import type {
+  RentalConfirmation,
   AvailabilityCalendar,
   Reservation,
   ReservationCheckoutRequest,
@@ -14,6 +15,12 @@ import type {
 } from "@/types/rental";
 
 export const rentalService = {
+  getConfirmation(checkoutId: string, accessToken: string) {
+    return apiRequest<RentalConfirmation>(
+      `/api/rentals/checkouts/${encodeURIComponent(checkoutId)}/confirmation`, {}, accessToken,
+    );
+  },
+
   getOwnInventory(accessToken: string) {
     return apiRequest<RentalInventorySummary[]>("/api/rentals/stores/me/inventory", {}, accessToken);
   },

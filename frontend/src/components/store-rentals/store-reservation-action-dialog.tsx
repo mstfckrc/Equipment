@@ -12,7 +12,7 @@ const descriptions = {
   CANCELLED: "Yalnız bu ürün ve tarih aralığındaki satır iptal edilecek. Diğer satırlar etkilenmez.",
   PICKED_UP: "Cihazları müşteriye fiziksel olarak teslim ettiğini kaydedeceksin. Sistem hazır cihazları bu satıra otomatik atayacak.",
   RETURN_RECEIVED: "Cihazları mağazada fiziksel olarak teslim aldığını kaydedeceksin. Cihazlar kontrol bekleyecek; henüz hazır sayılmayacak.",
-  RETURNED: "Aşağıdaki kontrol sonuçları kaydedilecek ve bu kiralama satırı tamamlanacak. Ek tutarlar tahsilat anlamına gelmez.",
+  RETURNED: "Aşağıdaki kontrol sonuçları kaydedilecek ve bu kiralama satırı tamamlanacak.",
 };
 
 export function StoreReservationActionDialog({ action, busy, error, onConfirm, onClose }: {

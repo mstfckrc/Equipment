@@ -1,0 +1,31 @@
+---
+title: EquipmentHub — Sistem mimarisi
+---
+flowchart TB
+    UI["Next.js arayüzü / Tarayıcı"] --> GW["API Gateway"]
+    GW --> AUTH["Auth Service"]
+    GW --> STORE["Store Service"]
+    GW --> CATALOG["Catalog Service"]
+    GW --> ADMIN["Admin Service"]
+    GW --> RENTAL
+
+    AUTH --> ADB[("Auth PostgreSQL")]
+    STORE --> SDB[("Store PostgreSQL")]
+    CATALOG --> CDB[("Catalog PostgreSQL")]
+    ADMIN -. "REST" .-> AUTH
+    ADMIN -. "REST" .-> STORE
+    ADMIN -. "REST" .-> CATALOG
+
+    subgraph RS["Rental Service - aynı uygulama"]
+        RENTAL["Rezervasyon ve envanter API"]
+        PUB["Outbox publisher"]
+        WORKER["Onay belgesi consumer"]
+    end
+
+    RENTAL --> RDB[("Rental PostgreSQL")]
+    RENTAL -. "REST" .-> STORE
+    RENTAL -. "REST" .-> CATALOG
+    RDB -. "Bekleyen olaylar" .-> PUB
+    PUB --> KAFKA["Kafka"]
+    KAFKA --> WORKER
+    WORKER --> RDB

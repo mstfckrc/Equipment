@@ -98,7 +98,7 @@ function CustomerRentalsContent({ checkoutId }: { checkoutId?: string }) {
       </header>
       {reservationsQuery.isSuccess && checkoutReservations.length > 0 ? <section className="notice-success space-y-2 rounded-xl p-5" role="status">
         <h2 className="font-semibold">Rezervasyonun oluşturuldu</h2>
-        <p className="text-sm leading-6">Demo rezervasyon tutarı: {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(checkoutTotal)}. Gerçek tahsilat alınmadı.</p>
+        <p className="text-sm leading-6">Onaylanan rezervasyon tutarı: {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(checkoutTotal)}. Kiralama detaylarını ve onay belgeni aşağıdan takip edebilirsin.</p>
       </section> : null}
       {reservationsQuery.isPending ? <p role="status" className="text-sm text-[var(--muted)]">Rezervasyonların yükleniyor…</p> : null}
       {reservationsQuery.isError ? <section role="alert" className="surface-card space-y-4 p-6">
