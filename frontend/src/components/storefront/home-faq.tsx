@@ -7,7 +7,8 @@ const questions = [
   { question: "Ekipmanı nasıl teslim alacağım?", answer: "Ekipmanı rezervasyonunda belirtilen tarihte ilgili mağazadan teslim alır, kiralama sonunda aynı mağazaya geri teslim edersin. Mağazanın adresini ve iletişim bilgisini mağaza sayfasında görebilirsin." },
   { question: "Tarih seçmek ekipmanı benim için ayırır mı?", answer: "Tarih seçmek veya sepete eklemek tek başına ekipmanı ayırmaz. Rezervasyonunu onaylarken güncel uygunluk ve fiyat tekrar kontrol edilir. Değişiklik varsa onaylamadan önce sana gösterilir." },
   { question: "Birden fazla mağazadan kiralayabilir miyim?", answer: "Evet. Farklı mağazalardan ekipmanları aynı sepete ekleyebilirsin. Onayladığında her mağaza için ayrı rezervasyon oluşur; hepsini Kiralamalarım ekranından takip edebilirsin." },
-  { question: "Şu anda ödeme alınıyor mu?", answer: "Mevcut demo sürümünde gerçek ödeme alınmıyor. Rezervasyonu onaylamak kartından veya hesabından para çekilmesine neden olmaz." },
+  { question: "Kiralama bilgilerimi nereden takip edebilirim?", answer: "Kiralamalarım ekranında rezervasyonlarını, teslim alma ve geri teslim tarihlerini takip edebilirsin. Her rezervasyon grubunun onay belgesine de aynı ekrandan ulaşabilirsin." },
+  { question: "Ekipmanı ne zaman geri teslim etmeliyim?", answer: "Seçtiğin geri teslim tarihinde saat 09.00'a kadar ekipmanı ilgili mağazaya ulaştırmalısın. Teslim alma saati 12.00'dir; kesin tarih ve saatleri rezervasyonunda görebilirsin." },
 ];
 
 export function HomeFaq() {

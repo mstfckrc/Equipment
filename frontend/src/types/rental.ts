@@ -123,6 +123,46 @@ export interface Reservation {
   currencyCode: string;
   createdAt: string;
   items: ReservationItem[];
+  confirmationStatus: ConfirmationStatus;
+}
+
+export type ConfirmationStatus = "PENDING" | "READY" | "FAILED";
+
+export interface ConfirmationContent {
+  checkoutId: string;
+  reservedAt: string;
+  preparedAt: string;
+  timeZone: string;
+  currencyCode: string;
+  totalAmount: number;
+  stores: Array<{
+    storeId: string;
+    reservationId: string;
+    storeName: string | null;
+    totalAmount: number;
+    items: Array<{
+      itemId: string;
+      listingId: string;
+      listingName: string;
+      quantity: number;
+      pickupAt: string;
+      returnAt: string;
+      rentalDays: number;
+      dailyPrice: number;
+      totalAmount: number;
+    }>;
+  }>;
+}
+
+export interface RentalConfirmation {
+  documentId: string | null;
+  checkoutId: string;
+  status: ConfirmationStatus;
+  contentVersion: number;
+  preparedAt: string | null;
+  errorCode: string | null;
+  message: string;
+  content: ConfirmationContent | null;
 }
 
 export interface ReservationCheckoutResponse {

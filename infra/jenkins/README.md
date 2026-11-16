@@ -2,8 +2,10 @@
 
 Kök `compose.yaml` içindeki `jenkins` ve `jenkins-agent`, `ci` profilindedir.
 Normal `docker compose up -d --build` komutu bu iki bileşeni başlatmaz.
-İlk pipeline checkout ve Maven paketlemesi yapar; test çalıştırma ve CI
-PostgreSQL'i bu başlangıç kontrolüne dahil değildir.
+Pipeline backend servislerini paketler; Auth ve Rental unit testlerini çalıştırıp
+JUnit raporlarını yayınlar. Frontend için npm ci, ESLint ve production build
+çalıştırır. Unit testler DB/broker gerektirmez; Hurl ve kökteki yerel tests klasörü
+CI'a veya Git'e dahil değildir.
 
 ## 1. Controller'ı başlat
 
@@ -111,6 +113,25 @@ Gerekirse yalnız kendi terminalinde `docker compose logs --tail 50 jenkins-agen
 ile bağlantı hatasını incele; paylaşmadan önce sır içermediğini kontrol et.
 Node'un `Sistem Bilgisi` ekranında Java 25 görülmeli.
 
+## Frontend için Node.js aracı
+
+Mevcut agent JDK içerir. Frontend aşaması, agent'a Node.js sağlamak için Jenkins'in
+NodeJS eklentisini kullanır. Eklenti yoksa Jenkins eklenti yönetiminden **NodeJS**
+kurulur. [Araç yapılandırmasında](http://localhost:8081/configureTools/) NodeJS
+kurulumu aşağıdaki gibi tanımlanır:
+
+| Alan | Değer |
+| --- | --- |
+| Name | equipmenthub-node24 |
+| Install automatically | Etkin |
+| NodeJS version | Node.js 24.x |
+| Global npm packages | Boş |
+
+İsim Jenkinsfile'daki `nodeJSInstallationName` ile aynı olmalıdır. Eklenti seçilen
+Node sürümünü agent'a kurar ve yalnız ilgili aşamada PATH'e ekler; agent image'ı
+ve Docker socket erişimi değiştirilmez. NodeJS aracı tanımlanmadan yeni pipeline'ın
+frontend aşaması çalışmaz. Resmî açıklama: [Jenkins NodeJS](https://plugins.jenkins.io/nodejs/).
+
 ## Kaynaklar ve günlük kullanım
 
 - Sabit image sürümleri: `jenkins/jenkins:2.580.2-jdk25` ve
@@ -141,10 +162,13 @@ açıldığında otomatik başlatma politikası değildir. `docker compose down 
 Jenkins dahil proje volume'lerini ve uygulama verilerini silebilir; durdurmak
 için yukarıdaki `stop` komutunu kullan.
 
-İlk pipeline'da `-DskipTests package` kullanılır. Build'in başarılı olması
-testlerin geçtiğini göstermez. Otomatik testler, raporlar ve gerekirse CI
-PostgreSQL'i test kapsamı gerektiğinde eklenir. Controller/agent'ın çalışması
-da tek başına başarılı CI, image build veya deployment kanıtı değildir.
+Auth ve Rental `clean package` sırasında unit testleri çalıştırır. Bu iki modülde
+Initializr'ın `*ApplicationTests` context kontrolleri Compose ortamı gerektirdiği
+için Surefire'da dışlanır; servis unit testleri normal test keşfiyle çalışır.
+Gateway/Store/Catalog/Admin aşamaları `-DskipTests` ile paketlenir; bunlar için test
+başarısı iddia edilmez. Frontend lint/build işlevsel tarayıcı testinin yerine geçmez.
+Controller/agent'ın çalışması da tek başına başarılı CI, image build veya deployment
+kanıtı değildir. Bu pipeline deployment yapmaz.
 
 Resmî kaynaklar: [Controller image](https://github.com/jenkinsci/docker),
 [Agent kurulumu](https://github.com/jenkinsci/docker-agents/blob/master/README_inbound-agent.md),

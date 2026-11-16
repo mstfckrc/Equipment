@@ -10,7 +10,9 @@ export function proxy(request: NextRequest) {
 
   if (!isAccountRole(roleHint)) {
     const loginUrl = new URL("/login", request.url);
-    if (request.nextUrl.pathname === "/account") loginUrl.searchParams.set("returnTo", "/account");
+    if (request.nextUrl.pathname === "/account" || request.nextUrl.pathname.startsWith("/rentals/confirmations/")) {
+      loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
+    }
     return NextResponse.redirect(loginUrl);
   }
 
@@ -22,5 +24,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/store/:path*", "/account"],
+  matcher: ["/admin/:path*", "/store/:path*", "/account", "/rentals/confirmations/:path*"],
 };

@@ -1,0 +1,69 @@
+---
+title: EquipmentHub — Kiralama veri modeli
+---
+erDiagram
+    RENTAL_CHECKOUT ||--o{ RESERVATION : groups
+    RESERVATION ||--o{ RESERVATION_ITEM : contains
+    RENTAL_INVENTORY ||--o{ EQUIPMENT_UNIT : tracks
+    RESERVATION_ITEM ||--o{ RESERVATION_UNIT_ASSIGNMENT : assigns
+    EQUIPMENT_UNIT ||--o{ RESERVATION_UNIT_ASSIGNMENT : used_in
+    RENTAL_CHECKOUT ||--o| RENTAL_CONFIRMATION : has
+    RENTAL_CHECKOUT ||--o| RENTAL_OUTBOX_EVENT : publishes
+
+    RENTAL_CHECKOUT {
+        uuid id PK
+        uuid customer_id
+        string idempotency_key
+        string request_fingerprint
+        decimal total_amount
+    }
+    RESERVATION {
+        uuid id PK
+        uuid checkout_id FK
+        uuid store_id
+        decimal total_amount
+    }
+    RESERVATION_ITEM {
+        uuid id PK
+        uuid reservation_id FK
+        uuid listing_id
+        date pickup_date
+        date return_date
+        int quantity
+        decimal daily_price
+        string status
+    }
+    RENTAL_INVENTORY {
+        uuid id PK
+        uuid store_id
+        uuid listing_id
+        long version
+    }
+    EQUIPMENT_UNIT {
+        uuid id PK
+        uuid inventory_id FK
+        string unit_code
+        string status
+    }
+    RESERVATION_UNIT_ASSIGNMENT {
+        uuid id PK
+        uuid reservation_item_id FK
+        uuid equipment_unit_id FK
+        timestamp handed_over_at
+        timestamp inspected_at
+        decimal manual_charge_amount
+    }
+    RENTAL_CONFIRMATION {
+        uuid id PK
+        uuid checkout_id FK, UK
+        string status
+        int content_version
+        jsonb content
+    }
+    RENTAL_OUTBOX_EVENT {
+        uuid id PK
+        uuid checkout_id FK, UK
+        timestamp published_at
+        timestamp next_attempt_at
+        int attempts
+    }

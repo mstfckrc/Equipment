@@ -31,7 +31,7 @@ export function StoreReservationRow({ item, now, busy, error, drafts, onDraft, o
           <ul className="space-y-3">{item.assignedUnits.map((unit) => <li key={unit.unitId} className="space-y-1 text-sm"><p className="break-all font-mono font-semibold">{unit.unitCode}</p>
             {unit.returnCondition && unit.returnCondition in conditionLabels ? <p>{conditionLabels[unit.returnCondition as ReturnUnitCondition]}</p> : null}
             {unit.damageNote ? <p className="break-words text-[var(--muted)]">Kontrol notu: {unit.damageNote}</p> : null}
-            {unit.manualChargeAmount != null ? <p className="text-[var(--muted)]">Kaydedilen ek tutar: {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(unit.manualChargeAmount)} · Tahsilat bilgisi değildir.</p> : null}
+            {unit.manualChargeAmount != null ? <p className="text-[var(--muted)]">Kaydedilen ek tutar: {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(unit.manualChargeAmount)}</p> : null}
           </li>)}</ul>}
       </div>
     </details> : item.status === "CONFIRMED" ? <p className="text-xs text-[var(--muted)]">Cihaz kodları teslim kaydı sırasında otomatik atanır.</p> : null}

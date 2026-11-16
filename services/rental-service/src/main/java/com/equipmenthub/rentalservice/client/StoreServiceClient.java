@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.util.UUID;
+import lombok.Data;
 
 @Component
 public class StoreServiceClient {
@@ -20,6 +21,28 @@ public class StoreServiceClient {
 	@Autowired
 	@Qualifier("storeRestClient")
 	private RestClient storeRestClient;
+
+	public String getPublicStoreName(UUID storeId) {
+		try {
+			PublicStoreName response = storeRestClient.get().uri("/api/stores/{id}", storeId)
+					.retrieve().body(PublicStoreName.class);
+			return response == null ? null : response.getStoreName();
+		}
+		catch (RestClientResponseException exception) {
+			if (exception.getStatusCode().value() == 404) {
+				return null;
+			}
+			throw serviceUnavailable();
+		}
+		catch (RestClientException exception) {
+			throw serviceUnavailable();
+		}
+	}
+
+	@Data
+	public static class PublicStoreName {
+		private String storeName;
+	}
 
 	public UUID getActiveStoreId(String accessToken) {
 		try {

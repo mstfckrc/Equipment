@@ -72,6 +72,10 @@ export function CartPage() {
 
   function submitCheckout() {
     if (checkout.isPending || !isReady || !lines.length) return;
+    if (lines.length > 100) {
+      setRequestError("Bir rezervasyonda en fazla 100 ürün satırını onaylayabilirsin. Sepetindeki satır sayısını azalt.");
+      return;
+    }
     const body = checkoutRequest(lines);
     const fingerprint = JSON.stringify(body);
     if (!attempt.current || attempt.current.fingerprint !== fingerprint) {
@@ -148,7 +152,7 @@ export function CartPage() {
                 <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-[var(--border)] pt-4"><dt className="font-semibold">Toplam tutar</dt>
                   <dd className="text-2xl font-semibold text-[var(--accent-strong)]">{money.format(linesTotal)}</dd></div>
               </dl>
-              <div className="rounded-lg bg-[var(--page)] p-3 text-xs leading-5 text-[var(--muted)]">Demo rezervasyon: gerçek ödeme alınmaz. Onay, seçilen ekipmanlar için rezervasyon oluşturur.</div>
+              <div className="rounded-lg bg-[var(--page)] p-3 text-xs leading-5 text-[var(--muted)]">Onay sırasında fiyat ve uygunluk yeniden kontrol edilir. Oluşan rezervasyonlarını Kiralamalarım ekranından takip edebilirsin.</div>
               {requestError && availabilityConflicts.length === 0 && priceChanges.length === 0 ? <p role="alert" className="text-sm text-[var(--danger)]">{requestError}</p> : null}
               <Button id="checkout-submit" className="w-full" onClick={submitCheckout} disabled={!isReady || checkout.isPending || lines.length === 0}>
                 {checkout.isPending ? "Uygunluk kontrol ediliyor…" : "Rezervasyonu onayla"}
